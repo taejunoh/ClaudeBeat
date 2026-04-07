@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct OnboardingView: View {
@@ -31,9 +32,18 @@ struct OnboardingView: View {
                 Text("Paste your session key")
                     .font(.headline)
 
-                SecureField("sessionKey value", text: $sessionKey)
-                    .textFieldStyle(.roundedBorder)
+                HStack {
+                    SecureField("sessionKey value", text: $sessionKey)
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(isConnecting)
+
+                    Button("Paste") {
+                        if let string = NSPasteboard.general.string(forType: .string) {
+                            sessionKey = string.trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                    }
                     .disabled(isConnecting)
+                }
 
                 Button {
                     showInstructions.toggle()

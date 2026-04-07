@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct AuthSettingsView: View {
@@ -30,8 +31,15 @@ struct AuthSettingsView: View {
                 }
 
             case .sessionCookie:
-                SecureField("Session Key", text: $authManager.sessionCookie)
-                    .textFieldStyle(.roundedBorder)
+                HStack {
+                    SecureField("Session Key", text: $authManager.sessionCookie)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Paste") {
+                        if let string = NSPasteboard.general.string(forType: .string) {
+                            authManager.sessionCookie = string.trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                    }
+                }
                 Text("Paste sessionKey from a.claude.ai browser cookies")
                     .font(.caption)
                     .foregroundStyle(.secondary)
