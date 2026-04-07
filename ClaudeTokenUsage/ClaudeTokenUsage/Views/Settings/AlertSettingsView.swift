@@ -5,16 +5,10 @@ struct AlertSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            GroupBox {
-                Toggle("Enable alerts on refresh", isOn: $notificationManager.alertsEnabled)
-                    .padding(.vertical, 4)
-            }
-
             GroupBox("Session Reset") {
                 Toggle("Notify when session resets", isOn: $notificationManager.sessionResetAlertEnabled)
                     .padding(.vertical, 4)
             }
-            .disabled(!notificationManager.alertsEnabled)
 
             GroupBox("Session (5h)") {
                 VStack(alignment: .leading, spacing: 6) {
@@ -30,7 +24,6 @@ struct AlertSettingsView: View {
                 }
                 .padding(.vertical, 4)
             }
-            .disabled(!notificationManager.alertsEnabled)
 
             GroupBox("Weekly (7d)") {
                 VStack(alignment: .leading, spacing: 6) {
@@ -46,7 +39,6 @@ struct AlertSettingsView: View {
                 }
                 .padding(.vertical, 4)
             }
-            .disabled(!notificationManager.alertsEnabled)
 
             GroupBox("Extra Usage") {
                 VStack(alignment: .leading, spacing: 6) {
@@ -61,7 +53,6 @@ struct AlertSettingsView: View {
                 }
                 .padding(.vertical, 4)
             }
-            .disabled(!notificationManager.alertsEnabled)
         }
         .padding()
     }
