@@ -52,7 +52,7 @@ struct OnboardingView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         instructionStep("1", "Open claude.ai in your browser and log in")
                         instructionStep("2", "Open DevTools (⌘⌥I) → Application tab")
-                        instructionStep("3", "Sidebar → Cookies → https://claude.ai")
+                        instructionStep("3", "Sidebar → Cookies → https://a.claude.ai")
                         instructionStep("4", "Find \"sessionKey\" and copy its value")
                     }
                     .font(.caption)

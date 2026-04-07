@@ -32,7 +32,7 @@ struct AuthSettingsView: View {
             case .sessionCookie:
                 SecureField("Session Key", text: $authManager.sessionCookie)
                     .textFieldStyle(.roundedBorder)
-                Text("Paste sessionKey from claude.ai browser cookies")
+                Text("Paste sessionKey from a.claude.ai browser cookies")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
