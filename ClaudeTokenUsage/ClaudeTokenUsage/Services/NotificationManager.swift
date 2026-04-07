@@ -13,10 +13,19 @@ final class NotificationManager {
 
     private var sessionAlerted: Bool = false
     private var weeklyAlerted: Bool = false
+    private var permissionGranted: Bool = false
+    private var previousSessionUtil: Double?
+    var sessionResetAlertEnabled: Bool = true
 
     func requestPermission() {
-        guard Bundle.main.bundleIdentifier != nil else { return }
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        guard Bundle.main.bundleIdentifier != nil else {
+            NSLog("[Notifications] No bundle identifier — skipping permission request")
+            return
+        }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            NSLog("[Notifications] Permission granted: \(granted), error: \(error?.localizedDescription ?? "none")")
+            self.permissionGranted = granted
+        }
     }
 
     func shouldAlertForSession(utilization: Double) -> Bool {
@@ -51,9 +60,23 @@ final class NotificationManager {
 
     func checkAndNotify(response: UsageResponse) {
         guard alertsEnabled else { return }
+
         let sessionUtil = response.fiveHour.utilization
+
+        // Detect session reset (usage drops significantly = new 5h window)
+        if sessionResetAlertEnabled, let prev = previousSessionUtil, prev >= 50, sessionUtil < 10 {
+            NSLog("[Notifications] Session reset detected: \(Int(prev))% → \(Int(sessionUtil))%")
+            sendNotification(
+                title: "Claude Session Reset",
+                body: "Your 5-hour session has reset. You're good to go!"
+            )
+            sessionAlerted = false
+        }
+        previousSessionUtil = sessionUtil
+
         resetSessionAlertIfNeeded(utilization: sessionUtil)
         if shouldAlertForSession(utilization: sessionUtil) {
+            NSLog("[Notifications] Session threshold hit: \(Int(sessionUtil))% >= \(Int(sessionThreshold))%")
             sendNotification(
                 title: "Claude Session Usage",
                 body: "5-hour usage at \(Int(sessionUtil))%"
@@ -64,6 +87,7 @@ final class NotificationManager {
         let weeklyUtil = response.sevenDay.utilization
         resetWeeklyAlertIfNeeded(utilization: weeklyUtil)
         if shouldAlertForWeekly(utilization: weeklyUtil) {
+            NSLog("[Notifications] Weekly threshold hit: \(Int(weeklyUtil))% >= \(Int(weeklyThreshold))%")
             sendNotification(
                 title: "Claude Weekly Usage",
                 body: "7-day usage at \(Int(weeklyUtil))%"
@@ -73,7 +97,11 @@ final class NotificationManager {
     }
 
     private func sendNotification(title: String, body: String) {
-        guard Bundle.main.bundleIdentifier != nil else { return }
+        guard Bundle.main.bundleIdentifier != nil else {
+            NSLog("[Notifications] No bundle identifier — cannot send notification")
+            return
+        }
+
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
@@ -84,6 +112,12 @@ final class NotificationManager {
             content: content,
             trigger: nil
         )
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                NSLog("[Notifications] Failed to deliver: \(error.localizedDescription)")
+            } else {
+                NSLog("[Notifications] Delivered: \(title) — \(body)")
+            }
+        }
     }
 }

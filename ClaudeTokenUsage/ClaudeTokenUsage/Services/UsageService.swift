@@ -49,6 +49,7 @@ final class UsageService {
             let usageResponse = try JSONDecoder.apiDecoder.decode(UsageResponse.self, from: data)
             NSLog("[UsageService] Decoded! 5h=\(usageResponse.fiveHour.utilization)%")
             usageState.update(with: usageResponse)
+            NSLog("[UsageService] Calling checkAndNotify, notificationManager is \(notificationManager == nil ? "nil" : "set")")
             notificationManager?.checkAndNotify(response: usageResponse)
         } catch {
             usageState.setError(error.localizedDescription)

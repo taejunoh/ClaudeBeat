@@ -10,6 +10,12 @@ struct AlertSettingsView: View {
                     .padding(.vertical, 4)
             }
 
+            GroupBox("Session Reset") {
+                Toggle("Notify when session resets", isOn: $notificationManager.sessionResetAlertEnabled)
+                    .padding(.vertical, 4)
+            }
+            .disabled(!notificationManager.alertsEnabled)
+
             GroupBox("Session (5h)") {
                 VStack(alignment: .leading, spacing: 6) {
                     Toggle("Enable", isOn: $notificationManager.sessionAlertsEnabled)
