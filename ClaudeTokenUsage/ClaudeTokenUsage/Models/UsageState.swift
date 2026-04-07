@@ -21,6 +21,16 @@ final class UsageState {
         return TimeFormatting.popoverString(until: resetsAt)
     }
 
+    var weeklyPercentage: String {
+        guard let utilization = response?.sevenDay.utilization else { return "--%"}
+        return "\(Int(utilization))%"
+    }
+
+    var weeklyResetTime: String {
+        guard let resetsAt = response?.sevenDay.resetsAt else { return "--" }
+        return TimeFormatting.popoverString(until: resetsAt)
+    }
+
     var colorLevel: ColorLevel {
         guard let utilization = response?.fiveHour.utilization else { return .gray }
         switch utilization {

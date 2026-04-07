@@ -4,42 +4,59 @@ struct AlertSettingsView: View {
     @Bindable var notificationManager: NotificationManager
 
     var body: some View {
-        Form {
-            Section("Session (5h)") {
-                Toggle("Enable alerts", isOn: $notificationManager.sessionAlertsEnabled)
-                HStack {
-                    Text("Warn at")
-                    Slider(value: $notificationManager.sessionThreshold, in: 50...100, step: 5)
-                    Text("\(Int(notificationManager.sessionThreshold))%")
-                        .monospacedDigit()
-                        .frame(width: 40)
-                }
-                .disabled(!notificationManager.sessionAlertsEnabled)
+        VStack(alignment: .leading, spacing: 12) {
+            GroupBox {
+                Toggle("Enable alerts on refresh", isOn: $notificationManager.alertsEnabled)
+                    .padding(.vertical, 4)
             }
 
-            Section("Weekly (7d)") {
-                Toggle("Enable alerts", isOn: $notificationManager.weeklyAlertsEnabled)
-                HStack {
-                    Text("Warn at")
-                    Slider(value: $notificationManager.weeklyThreshold, in: 50...100, step: 5)
-                    Text("\(Int(notificationManager.weeklyThreshold))%")
-                        .monospacedDigit()
-                        .frame(width: 40)
+            GroupBox("Session (5h)") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle("Enable", isOn: $notificationManager.sessionAlertsEnabled)
+                    HStack {
+                        Text("Warn at")
+                        Slider(value: $notificationManager.sessionThreshold, in: 50...100, step: 5)
+                        Text("\(Int(notificationManager.sessionThreshold))%")
+                            .monospacedDigit()
+                            .frame(width: 35)
+                    }
+                    .disabled(!notificationManager.sessionAlertsEnabled)
                 }
-                .disabled(!notificationManager.weeklyAlertsEnabled)
+                .padding(.vertical, 4)
             }
+            .disabled(!notificationManager.alertsEnabled)
 
-            Section("Extra Usage") {
-                Toggle("Enable alerts", isOn: $notificationManager.extraUsageAlertsEnabled)
-                HStack {
-                    Text("Warn at $")
-                    TextField("Amount", value: $notificationManager.extraUsageThreshold, format: .number)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
+            GroupBox("Weekly (7d)") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle("Enable", isOn: $notificationManager.weeklyAlertsEnabled)
+                    HStack {
+                        Text("Warn at")
+                        Slider(value: $notificationManager.weeklyThreshold, in: 50...100, step: 5)
+                        Text("\(Int(notificationManager.weeklyThreshold))%")
+                            .monospacedDigit()
+                            .frame(width: 35)
+                    }
+                    .disabled(!notificationManager.weeklyAlertsEnabled)
                 }
-                .disabled(!notificationManager.extraUsageAlertsEnabled)
+                .padding(.vertical, 4)
             }
+            .disabled(!notificationManager.alertsEnabled)
+
+            GroupBox("Extra Usage") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle("Enable", isOn: $notificationManager.extraUsageAlertsEnabled)
+                    HStack {
+                        Text("Warn at $")
+                        TextField("Amount", value: $notificationManager.extraUsageThreshold, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 80)
+                    }
+                    .disabled(!notificationManager.extraUsageAlertsEnabled)
+                }
+                .padding(.vertical, 4)
+            }
+            .disabled(!notificationManager.alertsEnabled)
         }
-        .formStyle(.grouped)
+        .padding()
     }
 }

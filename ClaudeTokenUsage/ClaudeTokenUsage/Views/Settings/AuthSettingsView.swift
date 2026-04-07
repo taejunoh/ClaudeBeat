@@ -5,12 +5,13 @@ struct AuthSettingsView: View {
     @Bindable var authManager: AuthManager
 
     var body: some View {
-        Form {
+        VStack(alignment: .leading, spacing: 12) {
             Picker("Auth Method", selection: $authManager.authMethod) {
                 ForEach(AuthMethod.allCases, id: \.self) { method in
                     Text(method.rawValue).tag(method)
                 }
             }
+            .pickerStyle(.segmented)
 
             switch authManager.authMethod {
             case .oauth:
@@ -25,7 +26,6 @@ struct AuthSettingsView: View {
                             .foregroundStyle(.green)
                     }
                 }
-
                 Button("Load from Keychain") {
                     authManager.loadOAuthTokenFromKeychain()
                 }
@@ -45,6 +45,8 @@ struct AuthSettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Divider()
+
             HStack {
                 connectionStatusView
                 Spacer()
@@ -55,7 +57,7 @@ struct AuthSettingsView: View {
                 }
             }
         }
-        .formStyle(.grouped)
+        .padding()
     }
 
     @ViewBuilder

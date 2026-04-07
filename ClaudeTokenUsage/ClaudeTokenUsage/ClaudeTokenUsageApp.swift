@@ -41,11 +41,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 80, height: 22))
 
-        topLabel = makeLabel(fontSize: 8, alignment: .center)
+        topLabel = makeLabel(fontSize: 10, alignment: .center)
         topLabel.stringValue = "Session:"
         topLabel.frame = NSRect(x: 0, y: 10, width: 80, height: 12)
 
-        bottomLabel = makeLabel(fontSize: 9, alignment: .center)
+        bottomLabel = makeLabel(fontSize: 10, alignment: .center)
         bottomLabel.stringValue = "--% · --"
         bottomLabel.frame = NSRect(x: 0, y: -1, width: 80, height: 12)
 
@@ -121,25 +121,61 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateMenuBarText() {
-        let showSessionLabel = UserDefaults.standard.bool(forKey: "showSessionLabel") || !UserDefaults.standard.dictionaryRepresentation().keys.contains("showSessionLabel")
+        let displayMode = UserDefaults.standard.string(forKey: "menuBarDisplay") ?? MenuBarDisplay.session.rawValue
         let showResetTime = UserDefaults.standard.bool(forKey: "showResetTime") || !UserDefaults.standard.dictionaryRepresentation().keys.contains("showResetTime")
 
-        topLabel?.stringValue = showSessionLabel ? "Session:" : ""
+        let mode = MenuBarDisplay(rawValue: displayMode) ?? .session
 
-        var bottom: [String] = [usageState.menuBarPercentage]
-        if showResetTime {
-            bottom.append("· \(usageState.menuBarResetTime)")
+        switch mode {
+        case .session:
+            // Single line: 5h: 56% · 4h 11m
+            topLabel?.stringValue = ""
+            topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
+            var line = ["5h: \(usageState.menuBarPercentage)"]
+            if showResetTime { line.append("· \(usageState.menuBarResetTime)") }
+            bottomLabel?.stringValue = line.joined(separator: " ")
+            bottomLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+            bottomLabel?.alignment = .center
+            bottomLabel?.frame = NSRect(x: 0, y: 2, width: statusItem.length, height: 18)
+            topLabel?.frame = NSRect(x: 0, y: 22, width: 0, height: 0)
+
+        case .weekly:
+            // Single line: 7d: 7% · Apr 14
+            topLabel?.stringValue = ""
+            topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
+            var line = ["7d: \(usageState.weeklyPercentage)"]
+            if showResetTime { line.append("· \(usageState.weeklyResetTime)") }
+            bottomLabel?.stringValue = line.joined(separator: " ")
+            bottomLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+            bottomLabel?.alignment = .center
+            bottomLabel?.frame = NSRect(x: 0, y: 2, width: statusItem.length, height: 18)
+            topLabel?.frame = NSRect(x: 0, y: 22, width: 0, height: 0)
+
+        case .both:
+            // Two lines — restore smaller font
+            topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
+            bottomLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
+            topLabel?.frame.origin.y = 10
+            bottomLabel?.frame.origin.y = -1
+
+            var top = ["5h: \(usageState.menuBarPercentage)"]
+            if showResetTime { top.append("· \(usageState.menuBarResetTime)") }
+            topLabel?.stringValue = top.joined(separator: " ")
+
+            var bottom = ["7d: \(usageState.weeklyPercentage)"]
+            if showResetTime { bottom.append("· \(usageState.weeklyResetTime)") }
+            bottomLabel?.stringValue = bottom.joined(separator: " ")
         }
-        bottomLabel?.stringValue = bottom.joined(separator: " ")
 
         // Auto-size width
         let topWidth = topLabel?.attributedStringValue.size().width ?? 0
         let bottomWidth = bottomLabel?.attributedStringValue.size().width ?? 0
-        let width = max(topWidth, bottomWidth) + 12
+        let width = max(topWidth, bottomWidth) + 14
         statusItem.length = max(width, 50)
-        topLabel?.frame.size.width = statusItem.length
-        bottomLabel?.frame.size.width = statusItem.length
-        statusItem.button?.subviews.first?.frame.size.width = statusItem.length
+        let len = statusItem.length
+        topLabel?.frame.size.width = len
+        bottomLabel?.frame.size.width = len
+        statusItem.button?.subviews.first?.frame = NSRect(x: 0, y: 0, width: len, height: 22)
     }
 
     private func setupServices() {

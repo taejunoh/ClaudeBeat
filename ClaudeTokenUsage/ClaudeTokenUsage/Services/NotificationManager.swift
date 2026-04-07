@@ -3,6 +3,7 @@ import UserNotifications
 
 @Observable
 final class NotificationManager {
+    var alertsEnabled: Bool = true
     var sessionThreshold: Double = 80
     var weeklyThreshold: Double = 80
     var extraUsageThreshold: Double = 40
@@ -49,6 +50,7 @@ final class NotificationManager {
     }
 
     func checkAndNotify(response: UsageResponse) {
+        guard alertsEnabled else { return }
         let sessionUtil = response.fiveHour.utilization
         resetSessionAlertIfNeeded(utilization: sessionUtil)
         if shouldAlertForSession(utilization: sessionUtil) {
