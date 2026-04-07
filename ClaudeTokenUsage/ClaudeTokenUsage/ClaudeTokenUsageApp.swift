@@ -6,6 +6,7 @@ struct ClaudeTokenUsageApp: App {
     @State private var authManager = AuthManager()
     @State private var notificationManager = NotificationManager()
     @State private var usageService: UsageService?
+    @State private var showOnboarding = false
 
     @AppStorage("showResetTime") private var showResetTime = true
     @AppStorage("showSessionLabel") private var showSessionLabel = true
@@ -29,6 +30,16 @@ struct ClaudeTokenUsageApp: App {
                 notificationManager: notificationManager
             )
         }
+
+        Window("Setup", id: "onboarding") {
+            OnboardingView(authManager: authManager) {
+                showOnboarding = false
+                startPolling()
+            }
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
 
     private var menuBarLabel: some View {
@@ -69,9 +80,29 @@ struct ClaudeTokenUsageApp: App {
         service.pollingInterval = pollingInterval
         usageService = service
 
+        if authManager.isConfigured {
+            Task {
+                try? await authManager.fetchOrganizationId()
+                service.startPolling()
+            }
+        } else {
+            showOnboarding = true
+            openOnboarding()
+        }
+    }
+
+    private func startPolling() {
+        guard let usageService else { return }
         Task {
             try? await authManager.fetchOrganizationId()
-            service.startPolling()
+            usageService.startPolling()
+        }
+    }
+
+    private func openOnboarding() {
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue.contains("onboarding") == true }) {
+            window.makeKeyAndOrderFront(nil)
         }
     }
 
