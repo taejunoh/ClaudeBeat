@@ -4,7 +4,6 @@ A native macOS menu bar app that monitors your Claude AI token usage in real-tim
 
 ![macOS](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.10-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
@@ -12,28 +11,17 @@ A native macOS menu bar app that monitors your Claude AI token usage in real-tim
 - **Three display modes** — Current Session (5h), Weekly Limit (7d), or Both
 - **Popover dashboard** — Click to see detailed usage with circular gauges
   - Session (5h) utilization with reset countdown
-  - Weekly (7d) breakdown: All models + Sonnet only
+  - Weekly (7d) breakdown: All models + Sonnet only with individual reset times
   - Extra usage credits ($used / $limit)
-- **Configurable alerts** — macOS notifications when usage hits your threshold (default 80%)
+- **Session reset notification** — Get notified when your 5h session resets so you can get back to work
+- **Threshold alerts** — macOS notifications when session or weekly usage hits your configured threshold (default 80%)
 - **Auto-refresh** — Polls every 60 seconds (configurable 15s–5min)
 - **Launch at login** — Optional auto-start
-
-## Screenshots
-
-### Menu Bar
-```
-5h: 82% · 2h 54m
-```
-
-### Both Mode
-```
-5h: 82% · 2h 54m
-7d: 7%  · Apr 14
-```
 
 ## Installation
 
 ### Prerequisites
+
 - macOS 14 (Sonoma) or later
 - [Xcode](https://developer.apple.com/xcode/) (for building)
 - [xcodegen](https://github.com/yonaskolb/XcodeGen) (optional, for regenerating the project)
@@ -49,9 +37,12 @@ cd claude-token-usage/ClaudeTokenUsage
 open ClaudeTokenUsage.xcodeproj
 # Press Cmd+R to build and run
 
-# Option 2: Build with Swift Package Manager
-swift build
-swift run
+# Option 2: Build with xcodebuild
+xcodebuild -scheme ClaudeTokenUsage -configuration Debug build \
+  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+
+# Option 3: Build with Swift Package Manager (no notifications)
+swift build && swift run
 ```
 
 ## Setup
@@ -66,39 +57,52 @@ On first launch, an onboarding window will appear:
 
 Your session key is saved locally and persists across app restarts.
 
+## Menu Bar Display
+
+| Mode | Example |
+|---|---|
+| Current Session | `5h: 82% · 2h 54m` |
+| Weekly Limit | `7d: 7% · Apr 14` |
+| Both | `5h: 82% · 2h 54m` (top) `7d: 7% · Apr 14` (bottom) |
+
 ## Settings
 
-Access settings via the gear icon in the popover:
+Access settings via the gear icon in the popover. Settings use a sidebar layout with four tabs:
 
 | Tab | Options |
 |---|---|
-| **Auth** | Switch between OAuth (Claude Code) and Session Cookie |
-| **Display** | Choose what to show: Session / Weekly / Both, toggle reset time |
-| **Alerts** | Enable/disable notifications, set thresholds per metric |
-| **General** | Polling interval, launch at login |
+| **Auth** | Switch between OAuth (Claude Code) and Session Cookie, test connection |
+| **Display** | Choose menu bar mode (Session / Weekly / Both), toggle reset time |
+| **Alerts** | Session reset notification, threshold alerts per metric (Session, Weekly, Extra Usage) |
+| **General** | Polling interval (15s–5min), launch at login, version info |
 
 ## Architecture
 
 ```
 ClaudeTokenUsage/
-├── ClaudeTokenUsageApp.swift      # AppDelegate + NSStatusItem
+├── ClaudeTokenUsageApp.swift      # AppDelegate + NSStatusItem + NSPopover
 ├── Models/
-│   ├── UsageResponse.swift        # API response models
+│   ├── UsageResponse.swift        # API response models (Codable)
 │   └── UsageState.swift           # Observable app state
 ├── Services/
 │   ├── AuthManager.swift          # OAuth + session cookie auth
-│   ├── UsageService.swift         # API polling
-│   └── NotificationManager.swift  # Alert thresholds
+│   ├── UsageService.swift         # API client + polling loop
+│   └── NotificationManager.swift  # Session reset + threshold alerts
 ├── Views/
-│   ├── PopoverView.swift          # Main popover
-│   ├── UsageGaugeView.swift       # Circular gauge
-│   ├── WeeklyUsageView.swift      # Weekly breakdown
-│   ├── ExtraUsageView.swift       # Extra usage bar
-│   ├── StatusBarView.swift        # Top/bottom bars
+│   ├── PopoverView.swift          # Main popover container
+│   ├── UsageGaugeView.swift       # Circular gauge component
+│   ├── WeeklyUsageView.swift      # Weekly breakdown (All models + Sonnet)
+│   ├── ExtraUsageView.swift       # Extra usage progress bar
+│   ├── StatusBarView.swift        # Top bar (refresh) + bottom bar (settings, quit)
 │   ├── OnboardingView.swift       # First-launch setup
-│   └── Settings/                  # Settings tabs
+│   └── Settings/
+│       ├── SettingsView.swift     # Sidebar settings container
+│       ├── AuthSettingsView.swift
+│       ├── DisplaySettingsView.swift
+│       ├── AlertSettingsView.swift
+│       └── GeneralSettingsView.swift
 └── Utilities/
-    └── TimeFormatting.swift       # Reset time formatting
+    └── TimeFormatting.swift       # Reset time formatting helpers
 ```
 
 ## API
@@ -114,9 +118,8 @@ Returns 5-hour session utilization, 7-day weekly limits (all models + Sonnet), a
 ## Tech Stack
 
 - **Swift + SwiftUI** — Native macOS app
-- **AppKit** — `NSStatusItem` for reliable menu bar updates
-- **NSPopover** — Click-to-open dashboard
-- **UserNotifications** — Alert notifications
+- **AppKit** — `NSStatusItem` for reliable menu bar updates, `NSPopover` for dashboard
+- **UserNotifications** — Session reset and threshold alerts
 - **Swift Concurrency** — async/await for API polling
 - **No third-party dependencies**
 
