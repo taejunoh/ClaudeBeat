@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -7,6 +8,7 @@ struct ClaudeTokenUsageApp: App {
     @State private var notificationManager = NotificationManager()
     @State private var usageService: UsageService?
     @State private var showOnboarding = false
+    @State private var onboardingWindow: NSWindow?
 
     @AppStorage("showResetTime") private var showResetTime = true
     @AppStorage("showSessionLabel") private var showSessionLabel = true
@@ -31,15 +33,6 @@ struct ClaudeTokenUsageApp: App {
             )
         }
 
-        Window("Setup", id: "onboarding") {
-            OnboardingView(authManager: authManager) {
-                showOnboarding = false
-                startPolling()
-            }
-        }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
     }
 
     private var menuBarLabel: some View {
@@ -100,10 +93,25 @@ struct ClaudeTokenUsageApp: App {
     }
 
     private func openOnboarding() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue.contains("onboarding") == true }) {
-            window.makeKeyAndOrderFront(nil)
+        let onboardingView = OnboardingView(authManager: authManager) { [self] in
+            startPolling()
+            onboardingWindow?.close()
+            onboardingWindow = nil
         }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 360, height: 400),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Claude Token Usage — Setup"
+        window.contentView = NSHostingView(rootView: onboardingView)
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        onboardingWindow = window
     }
 
     private func openSettings() {
