@@ -18,28 +18,26 @@ struct UsageGaugeView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             Text(title)
-                .font(.headline)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             ZStack {
                 Circle()
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 8)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 5)
 
                 Circle()
                     .trim(from: 0, to: utilization / 100)
-                    .stroke(gaugeColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .stroke(gaugeColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(.easeInOut(duration: 0.5), value: utilization)
 
-                VStack(spacing: 2) {
-                    Text("\(percentage)%")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                }
+                Text("\(percentage)%")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
             }
-            .frame(width: 80, height: 80)
+            .frame(width: 48, height: 48)
 
             if let resetsAt {
                 Text("Resets in \(TimeFormatting.popoverString(until: resetsAt))")
@@ -58,6 +56,7 @@ struct UsageGaugeView: View {
                 }
             }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
 }

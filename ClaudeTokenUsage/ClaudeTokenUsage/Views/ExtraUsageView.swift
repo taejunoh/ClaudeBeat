@@ -9,6 +9,14 @@ struct ExtraUsageView: View {
         return Double(usedCredits) / Double(monthlyLimit)
     }
 
+    private var usedDollars: String {
+        String(format: "%.2f", Double(usedCredits) / 100.0)
+    }
+
+    private var limitDollars: String {
+        String(format: "%.2f", Double(monthlyLimit) / 100.0)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Extra Usage")
@@ -17,7 +25,7 @@ struct ExtraUsageView: View {
 
             ProgressView(value: progress) {
                 HStack {
-                    Text("$\(usedCredits) / $\(monthlyLimit)")
+                    Text("$\(usedDollars) / $\(limitDollars)")
                         .font(.caption)
                         .foregroundStyle(.primary)
                     Spacer()

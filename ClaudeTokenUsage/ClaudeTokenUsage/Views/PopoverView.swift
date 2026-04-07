@@ -25,7 +25,7 @@ struct PopoverView: View {
                 onSettings: onSettings
             )
         }
-        .frame(width: 300)
+        .frame(width: 280)
         .background(.ultraThinMaterial)
     }
 
@@ -41,12 +41,9 @@ struct PopoverView: View {
 
         Divider()
 
-        UsageGaugeView(
-            title: "Weekly (7d)",
-            utilization: response.sevenDay.utilization,
-            resetsAt: response.sevenDay.resetsAt,
-            opusUtilization: nil,
-            sonnetUtilization: nil
+        WeeklyUsageView(
+            allModels: response.sevenDay,
+            sonnetOnly: response.sevenDaySonnet
         )
 
         if let extra = response.extraUsage, extra.isEnabled {

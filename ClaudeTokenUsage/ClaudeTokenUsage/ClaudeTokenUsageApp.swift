@@ -3,123 +3,181 @@ import SwiftUI
 
 @main
 struct ClaudeTokenUsageApp: App {
-    @State private var usageState = UsageState()
-    @State private var authManager = AuthManager()
-    @State private var notificationManager = NotificationManager()
-    @State private var usageService: UsageService?
-    @State private var showOnboarding = false
-    @State private var onboardingWindow: NSWindow?
-    @State private var menuBarText = "Session: --% · --"
-    @State private var refreshTimer: Timer?
-
-    @AppStorage("showResetTime") private var showResetTime = true
-    @AppStorage("showSessionLabel") private var showSessionLabel = true
-    @AppStorage("pollingInterval") private var pollingInterval: Double = 60
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        MenuBarExtra {
-            PopoverView(
-                usageState: usageState,
-                onRefresh: {
-                    Task {
-                        await usageService?.fetchUsage()
-                        updateMenuBarText()
-                    }
-                },
-                onSettings: { openSettings() }
-            )
-        } label: {
-            menuBarLabel
-        }
-        .menuBarExtraStyle(.window)
-
         Settings {
             SettingsView(
-                authManager: authManager,
-                notificationManager: notificationManager
+                authManager: appDelegate.authManager,
+                notificationManager: appDelegate.notificationManager
             )
         }
+    }
+}
 
+class AppDelegate: NSObject, NSApplicationDelegate {
+    let usageState = UsageState()
+    let authManager = AuthManager()
+    let notificationManager = NotificationManager()
+    var usageService: UsageService?
+
+    private var statusItem: NSStatusItem!
+    private var popover: NSPopover!
+    private var refreshTimer: Timer?
+    private var onboardingWindow: NSWindow?
+    private var settingsWindow: NSWindow?
+    private var eventMonitor: Any?
+
+    private var topLabel: NSTextField!
+    private var bottomLabel: NSTextField!
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Create status item with custom two-line view
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 80, height: 22))
+
+        topLabel = makeLabel(fontSize: 8, alignment: .center)
+        topLabel.stringValue = "Session:"
+        topLabel.frame = NSRect(x: 0, y: 10, width: 80, height: 12)
+
+        bottomLabel = makeLabel(fontSize: 9, alignment: .center)
+        bottomLabel.stringValue = "--% · --"
+        bottomLabel.frame = NSRect(x: 0, y: -1, width: 80, height: 12)
+
+        container.addSubview(topLabel)
+        container.addSubview(bottomLabel)
+
+        statusItem.button?.addSubview(container)
+        statusItem.button?.frame = container.frame
+        statusItem.length = 80
+        statusItem.button?.action = #selector(togglePopover)
+        statusItem.button?.target = self
+
+        // Create popover
+        popover = NSPopover()
+        popover.contentSize = NSSize(width: 300, height: 400)
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(
+            rootView: PopoverView(
+                usageState: usageState,
+                onRefresh: { [weak self] in
+                    guard let self else { return }
+                    Task {
+                        await self.usageService?.fetchUsage()
+                        await MainActor.run { self.updateMenuBarText() }
+                    }
+                },
+                onSettings: { [weak self] in
+                    self?.closePopover()
+                    self?.openSettings()
+                }
+            )
+        )
+
+        // Start refresh timer
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            self?.updateMenuBarText()
+        }
+
+        // Setup services
+        setupServices()
     }
 
-    private var menuBarLabel: some View {
-        Text(menuBarText)
-        .onAppear {
-            setupServices()
-            startMenuBarRefresh()
-        }
-        .onChange(of: pollingInterval) { _, newValue in
-            usageService?.pollingInterval = newValue
-            usageService?.startPolling()
-        }
-    }
-
-    private func startMenuBarRefresh() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
-            Task { @MainActor in
-                updateMenuBarText()
+    @objc private func togglePopover() {
+        guard let button = statusItem.button else { return }
+        if popover.isShown {
+            closePopover()
+        } else {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            NSApp.activate(ignoringOtherApps: true)
+            eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+                self?.closePopover()
             }
         }
     }
 
+    private func closePopover() {
+        popover.close()
+        if let eventMonitor {
+            NSEvent.removeMonitor(eventMonitor)
+        }
+        eventMonitor = nil
+    }
+
+    private func makeLabel(fontSize: CGFloat, alignment: NSTextAlignment) -> NSTextField {
+        let label = NSTextField(labelWithString: "")
+        label.font = NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .medium)
+        label.alignment = alignment
+        label.textColor = .headerTextColor
+        label.backgroundColor = .clear
+        label.isBezeled = false
+        label.isEditable = false
+        return label
+    }
+
     private func updateMenuBarText() {
-        var parts: [String] = []
-        if showSessionLabel {
-            parts.append("Session:")
-        }
-        parts.append(usageState.menuBarPercentage)
+        let showSessionLabel = UserDefaults.standard.bool(forKey: "showSessionLabel") || !UserDefaults.standard.dictionaryRepresentation().keys.contains("showSessionLabel")
+        let showResetTime = UserDefaults.standard.bool(forKey: "showResetTime") || !UserDefaults.standard.dictionaryRepresentation().keys.contains("showResetTime")
+
+        topLabel?.stringValue = showSessionLabel ? "Session:" : ""
+
+        var bottom: [String] = [usageState.menuBarPercentage]
         if showResetTime {
-            parts.append("·")
-            parts.append(usageState.menuBarResetTime)
+            bottom.append("· \(usageState.menuBarResetTime)")
         }
-        menuBarText = parts.joined(separator: " ")
+        bottomLabel?.stringValue = bottom.joined(separator: " ")
+
+        // Auto-size width
+        let topWidth = topLabel?.attributedStringValue.size().width ?? 0
+        let bottomWidth = bottomLabel?.attributedStringValue.size().width ?? 0
+        let width = max(topWidth, bottomWidth) + 12
+        statusItem.length = max(width, 50)
+        topLabel?.frame.size.width = statusItem.length
+        bottomLabel?.frame.size.width = statusItem.length
+        statusItem.button?.subviews.first?.frame.size.width = statusItem.length
     }
 
     private func setupServices() {
         authManager.loadOAuthTokenFromKeychain()
         notificationManager.requestPermission()
 
-        NSLog("[App] setupServices: isConfigured=\(authManager.isConfigured) cookie=\(authManager.sessionCookie.prefix(10))... orgId=\(authManager.organizationId)")
-
         let service = UsageService(
             authManager: authManager,
             usageState: usageState,
             notificationManager: notificationManager
         )
-        service.pollingInterval = pollingInterval
+        let interval = UserDefaults.standard.double(forKey: "pollingInterval")
+        service.pollingInterval = interval > 0 ? interval : 60
         usageService = service
 
         if authManager.isConfigured {
-            NSLog("[App] Auth configured, starting polling...")
             Task {
                 try? await authManager.fetchOrganizationId()
-                NSLog("[App] OrgId after fetch: \(authManager.organizationId)")
+                await service.fetchUsage()
+                await MainActor.run { updateMenuBarText() }
                 service.startPolling()
             }
         } else {
-            showOnboarding = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                openOnboarding()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.openOnboarding()
             }
-        }
-    }
-
-    private func startPolling() {
-        guard let usageService else { return }
-        Task {
-            if authManager.organizationId.isEmpty {
-                try? await authManager.fetchOrganizationId()
-            }
-            await usageService.fetchUsage()
-            usageService.startPolling()
         }
     }
 
     private func openOnboarding() {
-        let onboardingView = OnboardingView(authManager: authManager) { [self] in
-            startPolling()
-            onboardingWindow?.close()
-            onboardingWindow = nil
+        let onboardingView = OnboardingView(authManager: authManager) { [weak self] in
+            guard let self else { return }
+            self.onboardingWindow?.close()
+            self.onboardingWindow = nil
+            Task {
+                if self.authManager.organizationId.isEmpty {
+                    try? await self.authManager.fetchOrganizationId()
+                }
+                await self.usageService?.fetchUsage()
+                await MainActor.run { self.updateMenuBarText() }
+                self.usageService?.startPolling()
+            }
         }
 
         let window = NSWindow(
@@ -138,7 +196,29 @@ struct ClaudeTokenUsageApp: App {
     }
 
     private func openSettings() {
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        if let existing = settingsWindow, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let settingsView = SettingsView(
+            authManager: authManager,
+            notificationManager: notificationManager
+        )
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 450, height: 300),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Claude Token Usage — Settings"
+        window.contentView = NSHostingView(rootView: settingsView)
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        settingsWindow = window
     }
 }
