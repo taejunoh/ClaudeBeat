@@ -76,7 +76,7 @@ final class AuthManager {
     func fetchOrganizationId() async throws {
         guard isConfigured else { return }
 
-        var request = URLRequest(url: URL(string: "https://claude.ai/api/organizations")!)
+        var request = URLRequest(url: URL(string: "https://a.claude.ai/api/organizations")!)
         for (key, value) in buildHeaders() {
             request.setValue(value, forHTTPHeaderField: key)
         }

@@ -21,7 +21,7 @@ final class UsageService {
             return
         }
 
-        let urlString = "https://claude.ai/api/organizations/\(authManager.organizationId)/usage"
+        let urlString = "https://a.claude.ai/api/organizations/\(authManager.organizationId)/usage"
         guard let url = URL(string: urlString) else {
             usageState.setError("Invalid URL")
             return
