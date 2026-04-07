@@ -8,15 +8,17 @@ enum AuthMethod: String, CaseIterable, Sendable {
 
 @Observable
 final class AuthManager {
+    private static let defaults = UserDefaults(suiteName: "com.claudetokenusage.app") ?? .standard
+
     var authMethod: AuthMethod {
-        didSet { UserDefaults.standard.set(authMethod.rawValue, forKey: "authMethod") }
+        didSet { Self.defaults.set(authMethod.rawValue, forKey: "authMethod") }
     }
     var sessionCookie: String {
-        didSet { UserDefaults.standard.set(sessionCookie, forKey: "sessionCookie") }
+        didSet { Self.defaults.set(sessionCookie, forKey: "sessionCookie") }
     }
     var oauthToken: String = ""
     var organizationId: String {
-        didSet { UserDefaults.standard.set(organizationId, forKey: "organizationId") }
+        didSet { Self.defaults.set(organizationId, forKey: "organizationId") }
     }
     var connectionStatus: ConnectionStatus = .unknown
 
@@ -25,10 +27,11 @@ final class AuthManager {
     }
 
     init() {
-        let saved = UserDefaults.standard.string(forKey: "authMethod") ?? ""
+        let d = Self.defaults
+        let saved = d.string(forKey: "authMethod") ?? ""
         self.authMethod = AuthMethod(rawValue: saved) ?? .oauth
-        self.sessionCookie = UserDefaults.standard.string(forKey: "sessionCookie") ?? ""
-        self.organizationId = UserDefaults.standard.string(forKey: "organizationId") ?? ""
+        self.sessionCookie = d.string(forKey: "sessionCookie") ?? ""
+        self.organizationId = d.string(forKey: "organizationId") ?? ""
     }
 
     var isConfigured: Bool {
