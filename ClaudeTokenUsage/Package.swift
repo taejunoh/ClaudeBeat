@@ -8,7 +8,7 @@ let package = Package(
         .executableTarget(
             name: "ClaudeTokenUsage",
             path: "ClaudeTokenUsage",
-            exclude: ["Info.plist"]
+            exclude: ["Info.plist", "ClaudeTokenUsage.entitlements"]
         ),
         .testTarget(
             name: "ClaudeTokenUsageTests",

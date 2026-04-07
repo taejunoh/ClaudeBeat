@@ -1,0 +1,57 @@
+name: ClaudeTokenUsage
+options:
+  bundleIdPrefix: com.claudetokenusage
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: false
+
+targets:
+  ClaudeTokenUsage:
+    type: application
+    platform: macOS
+    sources:
+      - path: ClaudeTokenUsage
+        excludes:
+          - Info.plist
+    info:
+      path: ClaudeTokenUsage/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: Claude Token Usage
+        CFBundleName: ClaudeTokenUsage
+        CFBundleIdentifier: com.claudetokenusage.app
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+    entitlements:
+      path: ClaudeTokenUsage/ClaudeTokenUsage.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.claudetokenusage.app
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.10"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGNING_ALLOWED: true
+        CODE_SIGNING_REQUIRED: false
+        INFOPLIST_FILE: ClaudeTokenUsage/Info.plist
+        GENERATE_INFOPLIST_FILE: false
+
+  ClaudeTokenUsageTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: ClaudeTokenUsageTests
+    dependencies:
+      - target: ClaudeTokenUsage
+    settings:
+      base:
+        SWIFT_VERSION: "5.10"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ClaudeTokenUsage.app/Contents/MacOS/ClaudeTokenUsage"
