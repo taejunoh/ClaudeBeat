@@ -18,7 +18,7 @@ final class UsageState {
 
     var menuBarResetTime: String {
         guard let resetsAt = response?.fiveHour.resetsAt else { return "--" }
-        return TimeFormatting.menuBarString(until: resetsAt)
+        return TimeFormatting.popoverString(until: resetsAt)
     }
 
     var colorLevel: ColorLevel {

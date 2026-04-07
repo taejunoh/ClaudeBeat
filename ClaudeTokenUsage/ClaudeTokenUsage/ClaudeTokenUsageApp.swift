@@ -9,6 +9,8 @@ struct ClaudeTokenUsageApp: App {
     @State private var usageService: UsageService?
     @State private var showOnboarding = false
     @State private var onboardingWindow: NSWindow?
+    @State private var menuBarText = "Session: --% · --"
+    @State private var refreshTimer: Timer?
 
     @AppStorage("showResetTime") private var showResetTime = true
     @AppStorage("showSessionLabel") private var showSessionLabel = true
@@ -18,7 +20,12 @@ struct ClaudeTokenUsageApp: App {
         MenuBarExtra {
             PopoverView(
                 usageState: usageState,
-                onRefresh: { Task { await usageService?.fetchUsage() } },
+                onRefresh: {
+                    Task {
+                        await usageService?.fetchUsage()
+                        updateMenuBarText()
+                    }
+                },
                 onSettings: { openSettings() }
             )
         } label: {
@@ -36,24 +43,10 @@ struct ClaudeTokenUsageApp: App {
     }
 
     private var menuBarLabel: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "circle.fill")
-                .font(.system(size: 6))
-                .foregroundStyle(usageState.statusColor)
-
-            if showSessionLabel {
-                Text("Session:")
-            }
-
-            Text(usageState.menuBarPercentage)
-
-            if showResetTime {
-                Text("·")
-                Text(usageState.menuBarResetTime)
-            }
-        }
+        Text(menuBarText)
         .onAppear {
             setupServices()
+            startMenuBarRefresh()
         }
         .onChange(of: pollingInterval) { _, newValue in
             usageService?.pollingInterval = newValue
@@ -61,9 +54,32 @@ struct ClaudeTokenUsageApp: App {
         }
     }
 
+    private func startMenuBarRefresh() {
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
+            Task { @MainActor in
+                updateMenuBarText()
+            }
+        }
+    }
+
+    private func updateMenuBarText() {
+        var parts: [String] = []
+        if showSessionLabel {
+            parts.append("Session:")
+        }
+        parts.append(usageState.menuBarPercentage)
+        if showResetTime {
+            parts.append("·")
+            parts.append(usageState.menuBarResetTime)
+        }
+        menuBarText = parts.joined(separator: " ")
+    }
+
     private func setupServices() {
         authManager.loadOAuthTokenFromKeychain()
         notificationManager.requestPermission()
+
+        NSLog("[App] setupServices: isConfigured=\(authManager.isConfigured) cookie=\(authManager.sessionCookie.prefix(10))... orgId=\(authManager.organizationId)")
 
         let service = UsageService(
             authManager: authManager,
@@ -74,8 +90,10 @@ struct ClaudeTokenUsageApp: App {
         usageService = service
 
         if authManager.isConfigured {
+            NSLog("[App] Auth configured, starting polling...")
             Task {
                 try? await authManager.fetchOrganizationId()
+                NSLog("[App] OrgId after fetch: \(authManager.organizationId)")
                 service.startPolling()
             }
         } else {
@@ -89,7 +107,10 @@ struct ClaudeTokenUsageApp: App {
     private func startPolling() {
         guard let usageService else { return }
         Task {
-            try? await authManager.fetchOrganizationId()
+            if authManager.organizationId.isEmpty {
+                try? await authManager.fetchOrganizationId()
+            }
+            await usageService.fetchUsage()
             usageService.startPolling()
         }
     }

@@ -16,8 +16,10 @@ final class UsageService {
     }
 
     func fetchUsage() async {
+        NSLog("[UsageService] fetchUsage called. isConfigured=\(authManager.isConfigured) orgId=\(authManager.organizationId)")
         guard authManager.isConfigured, !authManager.organizationId.isEmpty else {
             usageState.setError("Not authenticated")
+            NSLog("[UsageService] Not authenticated, skipping")
             return
         }
 
@@ -43,7 +45,9 @@ final class UsageService {
                 return
             }
 
+            NSLog("[UsageService] HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0) body: \(String(data: data.prefix(200), encoding: .utf8) ?? "nil")")
             let usageResponse = try JSONDecoder.apiDecoder.decode(UsageResponse.self, from: data)
+            NSLog("[UsageService] Decoded! 5h=\(usageResponse.fiveHour.utilization)%")
             usageState.update(with: usageResponse)
             notificationManager?.checkAndNotify(response: usageResponse)
         } catch {

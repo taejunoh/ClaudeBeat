@@ -115,14 +115,14 @@ struct OnboardingView: View {
         authManager.authMethod = .sessionCookie
         authManager.sessionCookie = sessionKey
 
-        Task {
+        Task { @MainActor in
             do {
                 try await authManager.fetchOrganizationId()
                 if case .connected = authManager.connectionStatus {
                     onComplete()
                 }
             } catch {
-                // connectionStatus is already set by fetchOrganizationId
+                print("Connection error: \(error)")
             }
             isConnecting = false
         }
