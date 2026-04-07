@@ -8,14 +8,27 @@ enum AuthMethod: String, CaseIterable, Sendable {
 
 @Observable
 final class AuthManager {
-    var authMethod: AuthMethod = .oauth
-    var sessionCookie: String = ""
+    var authMethod: AuthMethod {
+        didSet { UserDefaults.standard.set(authMethod.rawValue, forKey: "authMethod") }
+    }
+    var sessionCookie: String {
+        didSet { UserDefaults.standard.set(sessionCookie, forKey: "sessionCookie") }
+    }
     var oauthToken: String = ""
-    var organizationId: String = ""
+    var organizationId: String {
+        didSet { UserDefaults.standard.set(organizationId, forKey: "organizationId") }
+    }
     var connectionStatus: ConnectionStatus = .unknown
 
     enum ConnectionStatus: Equatable {
         case unknown, connected, error(String)
+    }
+
+    init() {
+        let saved = UserDefaults.standard.string(forKey: "authMethod") ?? ""
+        self.authMethod = AuthMethod(rawValue: saved) ?? .oauth
+        self.sessionCookie = UserDefaults.standard.string(forKey: "sessionCookie") ?? ""
+        self.organizationId = UserDefaults.standard.string(forKey: "organizationId") ?? ""
     }
 
     var isConfigured: Bool {
