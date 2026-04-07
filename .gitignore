@@ -3,5 +3,7 @@
 *.xcodeproj/xcuserdata/
 DerivedData/
 .swiftpm/
+handover.md
 ClaudeTokenUsage.xcodeproj/xcuserdata/
 ClaudeTokenUsage.xcodeproj/project.xcworkspace/xcuserdata/
+docs/superpowers/
