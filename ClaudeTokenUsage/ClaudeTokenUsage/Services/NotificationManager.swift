@@ -14,6 +14,7 @@ final class NotificationManager {
     private var weeklyAlerted: Bool = false
 
     func requestPermission() {
+        guard Bundle.main.bundleIdentifier != nil else { return }
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
@@ -70,6 +71,7 @@ final class NotificationManager {
     }
 
     private func sendNotification(title: String, body: String) {
+        guard Bundle.main.bundleIdentifier != nil else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
