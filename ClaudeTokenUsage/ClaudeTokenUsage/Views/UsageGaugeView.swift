@@ -61,16 +61,3 @@ struct UsageGaugeView: View {
         .padding()
     }
 }
-
-#Preview {
-    UsageGaugeView(
-        title: "Session (5h)",
-        utilization: 69,
-        resetsAt: Date().addingTimeInterval(2 * 3600 + 14 * 60),
-        opusUtilization: 45,
-        sonnetUtilization: 24
-    )
-    .frame(width: 200)
-    .background(.black)
-    .preferredColorScheme(.dark)
-}

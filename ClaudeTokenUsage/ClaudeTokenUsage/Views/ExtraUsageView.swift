@@ -31,10 +31,3 @@ struct ExtraUsageView: View {
         .padding()
     }
 }
-
-#Preview {
-    ExtraUsageView(usedCredits: 1200, monthlyLimit: 5000)
-        .frame(width: 280)
-        .background(.black)
-        .preferredColorScheme(.dark)
-}
