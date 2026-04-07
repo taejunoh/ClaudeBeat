@@ -80,7 +80,9 @@ struct ClaudeTokenUsageApp: App {
             }
         } else {
             showOnboarding = true
-            openOnboarding()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                openOnboarding()
+            }
         }
     }
 

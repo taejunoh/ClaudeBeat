@@ -79,16 +79,25 @@ final class AuthManager {
     func fetchOrganizationId() async throws {
         guard isConfigured else { return }
 
-        var request = URLRequest(url: URL(string: "https://a.claude.ai/api/organizations")!)
+        var request = URLRequest(url: URL(string: "https://claude.ai/api/organizations")!)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         for (key, value) in buildHeaders() {
             request.setValue(value, forHTTPHeaderField: key)
         }
 
+        print("[AuthManager] Fetching organizations...")
         let (data, response) = try await URLSession.shared.data(for: request)
+        print("[AuthManager] Got response: \(String(data: data, encoding: .utf8) ?? "nil")")
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            connectionStatus = .error("Failed to fetch organizations")
+        guard let httpResponse = response as? HTTPURLResponse else {
+            connectionStatus = .error("No HTTP response")
+            throw URLError(.badServerResponse)
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            print("API error: HTTP \(httpResponse.statusCode) — \(body)")
+            connectionStatus = .error("HTTP \(httpResponse.statusCode)")
             throw URLError(.badServerResponse)
         }
 

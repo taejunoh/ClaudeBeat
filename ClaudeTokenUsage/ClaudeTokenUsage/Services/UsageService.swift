@@ -21,13 +21,14 @@ final class UsageService {
             return
         }
 
-        let urlString = "https://a.claude.ai/api/organizations/\(authManager.organizationId)/usage"
+        let urlString = "https://claude.ai/api/organizations/\(authManager.organizationId)/usage"
         guard let url = URL(string: urlString) else {
             usageState.setError("Invalid URL")
             return
         }
 
         var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         for (key, value) in authManager.buildHeaders() {
             request.setValue(value, forHTTPHeaderField: key)
         }
