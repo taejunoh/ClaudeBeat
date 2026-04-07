@@ -1,9 +1,9 @@
+import AppKit
 import SwiftUI
 
-struct StatusBarView: View {
+struct TopBarView: View {
     let lastUpdated: Date?
     let onRefresh: () -> Void
-    let onSettings: () -> Void
 
     private var lastUpdatedText: String {
         guard let lastUpdated else { return "Never" }
@@ -14,11 +14,6 @@ struct StatusBarView: View {
 
     var body: some View {
         HStack {
-            Button(action: onSettings) {
-                Image(systemName: "gear")
-            }
-            .buttonStyle(.plain)
-
             Spacer()
 
             Text("Updated \(lastUpdatedText)")
@@ -27,6 +22,31 @@ struct StatusBarView: View {
 
             Button(action: onRefresh) {
                 Image(systemName: "arrow.clockwise")
+                    .font(.caption2)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 4)
+    }
+}
+
+struct BottomBarView: View {
+    let onSettings: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onSettings) {
+                Image(systemName: "gear")
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Button {
+                NSApplication.shared.terminate(nil)
+            } label: {
+                Image(systemName: "power")
             }
             .buttonStyle(.plain)
         }

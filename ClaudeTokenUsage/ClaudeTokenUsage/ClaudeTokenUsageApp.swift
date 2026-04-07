@@ -31,6 +31,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var topLabel: NSTextField!
     private var bottomLabel: NSTextField!
 
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status item with custom two-line view
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

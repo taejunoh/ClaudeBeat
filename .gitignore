@@ -3,3 +3,5 @@
 *.xcodeproj/xcuserdata/
 DerivedData/
 .swiftpm/
+ClaudeTokenUsage.xcodeproj/xcuserdata/
+ClaudeTokenUsage.xcodeproj/project.xcworkspace/xcuserdata/

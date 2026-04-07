@@ -7,6 +7,14 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Top bar: updated time + refresh
+            TopBarView(
+                lastUpdated: usageState.lastUpdated,
+                onRefresh: onRefresh
+            )
+
+            Divider()
+
             if usageState.isError {
                 errorSection
             } else if let response = usageState.response {
@@ -19,11 +27,8 @@ struct PopoverView: View {
 
             Divider()
 
-            StatusBarView(
-                lastUpdated: usageState.lastUpdated,
-                onRefresh: onRefresh,
-                onSettings: onSettings
-            )
+            // Bottom bar: settings + quit
+            BottomBarView(onSettings: onSettings)
         }
         .frame(width: 280)
         .background(.ultraThinMaterial)
