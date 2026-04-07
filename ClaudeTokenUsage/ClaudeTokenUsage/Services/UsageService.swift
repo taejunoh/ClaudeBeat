@@ -4,13 +4,15 @@ import Foundation
 final class UsageService {
     private let authManager: AuthManager
     private let usageState: UsageState
+    private let notificationManager: NotificationManager?
     private var pollingTask: Task<Void, Never>?
 
     var pollingInterval: TimeInterval = 60
 
-    init(authManager: AuthManager, usageState: UsageState) {
+    init(authManager: AuthManager, usageState: UsageState, notificationManager: NotificationManager? = nil) {
         self.authManager = authManager
         self.usageState = usageState
+        self.notificationManager = notificationManager
     }
 
     func fetchUsage() async {
@@ -42,6 +44,7 @@ final class UsageService {
 
             let usageResponse = try JSONDecoder.apiDecoder.decode(UsageResponse.self, from: data)
             usageState.update(with: usageResponse)
+            notificationManager?.checkAndNotify(response: usageResponse)
         } catch {
             usageState.setError(error.localizedDescription)
         }
