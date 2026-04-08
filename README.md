@@ -11,11 +11,13 @@ A native macOS menu bar app that monitors your Claude AI token usage in real-tim
   macOS 14+ &nbsp;·&nbsp; No Xcode needed &nbsp;·&nbsp; Just unzip and run
 </p>
 
-![macOS](https://img.shields.io/badge/macOS-14%2B-blue)
-![Swift](https://img.shields.io/badge/Swift-5.10-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
-[![Release](https://img.shields.io/github/v/release/taejunoh/claude-token-usage)](https://github.com/taejunoh/claude-token-usage/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/taejunoh/claude-token-usage/total)](https://github.com/taejunoh/claude-token-usage/releases)
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS">
+  <img src="https://img.shields.io/badge/Swift-5.10-orange" alt="Swift">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  <a href="https://github.com/taejunoh/claude-token-usage/releases/latest"><img src="https://img.shields.io/github/v/release/taejunoh/claude-token-usage" alt="Release"></a>
+  <a href="https://github.com/taejunoh/claude-token-usage/releases"><img src="https://img.shields.io/github/downloads/taejunoh/claude-token-usage/total" alt="Downloads"></a>
+</p>
 
 ## Screenshots
 
