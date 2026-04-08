@@ -21,12 +21,9 @@ A native macOS menu bar app that monitors your Claude AI token usage in real-tim
 
 ## Screenshots
 
-<!-- Add your screenshots here -->
-<!-- ![Menu Bar](assets/menubar.png) -->
-<!-- ![Popover Dashboard](assets/popover.png) -->
-<!-- ![Settings](assets/settings.png) -->
-
-*Screenshots coming soon*
+| Menu Bar | Popover Dashboard | Settings |
+|---|---|---|
+| ![Menu Bar](assets/menubar.png) | ![Popover](assets/popover.png) | ![Settings](assets/settings.png) |
 
 ## Features
 
