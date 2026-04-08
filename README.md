@@ -121,56 +121,6 @@ This happens once when the app first accesses the Keychain. Click "Always Allow"
 ### Extra Usage shows wrong amounts
 The API returns values in cents. The app converts to dollars (e.g., 2629 cents → $26.29). If amounts look wrong, please [open an issue](https://github.com/taejunoh/claude-token-usage/issues).
 
-## Build from Source
-
-### Prerequisites
-
-- [Xcode](https://developer.apple.com/xcode/)
-- [xcodegen](https://github.com/yonaskolb/XcodeGen) (optional, for regenerating the project)
-
-### Build & Run
-
-```bash
-# Clone the repo
-git clone https://github.com/taejunoh/claude-token-usage.git
-cd claude-token-usage/ClaudeTokenUsage
-
-# Option 1: Build with Xcode (recommended — enables notifications)
-open ClaudeTokenUsage.xcodeproj
-# Press Cmd+R to build and run
-
-# Option 2: Build with xcodebuild
-xcodebuild -scheme ClaudeTokenUsage -configuration Release \
-  -archivePath /tmp/ClaudeTokenUsage.xcarchive archive \
-  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
-
-# Option 3: Build with Swift Package Manager (no notifications)
-swift build && swift run
-```
-
-## Architecture
-
-```
-ClaudeTokenUsage/
-├── ClaudeTokenUsageApp.swift      # @MainActor AppDelegate + NSStatusItem + NSPopover
-├── Models/
-│   ├── UsageResponse.swift        # API response models (Codable)
-│   └── UsageState.swift           # @MainActor @Observable app state
-├── Services/
-│   ├── AuthManager.swift          # OAuth + session cookie auth (Keychain storage)
-│   ├── UsageService.swift         # API client + async polling loop
-│   └── NotificationManager.swift  # @MainActor session reset + threshold alerts (persisted)
-├── Views/
-│   ├── PopoverView.swift          # Main popover container
-│   ├── UsageGaugeView.swift       # Circular gauge component
-│   ├── WeeklyUsageView.swift      # Weekly breakdown (All models + Sonnet)
-│   ├── ExtraUsageView.swift       # Extra usage progress bar
-│   ├── StatusBarView.swift        # Top bar (refresh) + bottom bar (settings, quit)
-│   ├── OnboardingView.swift       # First-launch setup
-│   └── Settings/                  # Sidebar settings (Auth, Display, Alerts, General)
-└── Utilities/
-    └── TimeFormatting.swift       # Reset time formatting (cached formatters)
-```
 
 ## Security
 
