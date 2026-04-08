@@ -7,3 +7,6 @@ handover.md
 ClaudeTokenUsage.xcodeproj/xcuserdata/
 ClaudeTokenUsage.xcodeproj/project.xcworkspace/xcuserdata/
 docs/superpowers/
+*.profraw
+ClaudeTokenUsage/ClaudeTokenUsage *.xcodeproj/
+Info 2.plist
