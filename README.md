@@ -1,6 +1,6 @@
 # Claude Token Usage
 
-A native macOS menu bar app that monitors your Claude AI token usage in real-time.
+<p align="center">A native macOS menu bar app that monitors your Claude AI token usage in real-time.</p>
 
 <p align="center">
   <a href="https://github.com/taejunoh/claude-token-usage/releases/latest/download/ClaudeTokenUsage.zip">
