@@ -69,9 +69,13 @@ struct WeeklyUsageView: View {
         }
     }
 
+    private static let resetFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE h:mm a"
+        return f
+    }()
+
     private func resetString(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE h:mm a"
-        return formatter.string(from: date)
+        Self.resetFormatter.string(from: date)
     }
 }

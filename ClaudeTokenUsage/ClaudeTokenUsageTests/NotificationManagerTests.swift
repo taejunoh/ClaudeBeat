@@ -1,6 +1,7 @@
 import XCTest
 @testable import ClaudeTokenUsage
 
+@MainActor
 final class NotificationManagerTests: XCTestCase {
 
     func testShouldAlert_belowThreshold() {

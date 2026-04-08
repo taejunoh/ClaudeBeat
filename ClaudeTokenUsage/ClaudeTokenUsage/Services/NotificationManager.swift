@@ -1,31 +1,56 @@
 import Foundation
 import UserNotifications
 
+@MainActor
 @Observable
 final class NotificationManager {
-    var alertsEnabled: Bool = true
-    var sessionThreshold: Double = 80
-    var weeklyThreshold: Double = 80
-    var extraUsageThreshold: Double = 40
-    var sessionAlertsEnabled: Bool = true
-    var weeklyAlertsEnabled: Bool = true
-    var extraUsageAlertsEnabled: Bool = true
+    private static let defaults = UserDefaults(suiteName: "com.claudetokenusage.app") ?? .standard
+
+    var alertsEnabled: Bool {
+        didSet { Self.defaults.set(alertsEnabled, forKey: "alertsEnabled") }
+    }
+    var sessionThreshold: Double {
+        didSet { Self.defaults.set(sessionThreshold, forKey: "sessionThreshold") }
+    }
+    var weeklyThreshold: Double {
+        didSet { Self.defaults.set(weeklyThreshold, forKey: "weeklyThreshold") }
+    }
+    var extraUsageThreshold: Double {
+        didSet { Self.defaults.set(extraUsageThreshold, forKey: "extraUsageThreshold") }
+    }
+    var sessionAlertsEnabled: Bool {
+        didSet { Self.defaults.set(sessionAlertsEnabled, forKey: "sessionAlertsEnabled") }
+    }
+    var weeklyAlertsEnabled: Bool {
+        didSet { Self.defaults.set(weeklyAlertsEnabled, forKey: "weeklyAlertsEnabled") }
+    }
+    var extraUsageAlertsEnabled: Bool {
+        didSet { Self.defaults.set(extraUsageAlertsEnabled, forKey: "extraUsageAlertsEnabled") }
+    }
+    var sessionResetAlertEnabled: Bool {
+        didSet { Self.defaults.set(sessionResetAlertEnabled, forKey: "sessionResetAlertEnabled") }
+    }
 
     private var sessionAlerted: Bool = false
     private var weeklyAlerted: Bool = false
-    private var permissionGranted: Bool = false
+    private var extraUsageAlerted: Bool = false
     private var previousSessionUtil: Double?
-    var sessionResetAlertEnabled: Bool = true
+
+    init() {
+        let d = Self.defaults
+        self.alertsEnabled = d.object(forKey: "alertsEnabled") as? Bool ?? true
+        self.sessionThreshold = d.object(forKey: "sessionThreshold") as? Double ?? 80
+        self.weeklyThreshold = d.object(forKey: "weeklyThreshold") as? Double ?? 80
+        self.extraUsageThreshold = d.object(forKey: "extraUsageThreshold") as? Double ?? 40
+        self.sessionAlertsEnabled = d.object(forKey: "sessionAlertsEnabled") as? Bool ?? true
+        self.weeklyAlertsEnabled = d.object(forKey: "weeklyAlertsEnabled") as? Bool ?? true
+        self.extraUsageAlertsEnabled = d.object(forKey: "extraUsageAlertsEnabled") as? Bool ?? true
+        self.sessionResetAlertEnabled = d.object(forKey: "sessionResetAlertEnabled") as? Bool ?? true
+    }
 
     func requestPermission() {
-        guard Bundle.main.bundleIdentifier != nil else {
-            NSLog("[Notifications] No bundle identifier — skipping permission request")
-            return
-        }
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            NSLog("[Notifications] Permission granted: \(granted), error: \(error?.localizedDescription ?? "none")")
-            self.permissionGranted = granted
-        }
+        guard Bundle.main.bundleIdentifier != nil else { return }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
 
     func shouldAlertForSession(utilization: Double) -> Bool {
@@ -38,24 +63,15 @@ final class NotificationManager {
         return utilization >= weeklyThreshold
     }
 
-    func markSessionAlerted() {
-        sessionAlerted = true
-    }
-
-    func markWeeklyAlerted() {
-        weeklyAlerted = true
-    }
+    func markSessionAlerted() { sessionAlerted = true }
+    func markWeeklyAlerted() { weeklyAlerted = true }
 
     func resetSessionAlertIfNeeded(utilization: Double) {
-        if utilization < sessionThreshold {
-            sessionAlerted = false
-        }
+        if utilization < sessionThreshold { sessionAlerted = false }
     }
 
     func resetWeeklyAlertIfNeeded(utilization: Double) {
-        if utilization < weeklyThreshold {
-            weeklyAlerted = false
-        }
+        if utilization < weeklyThreshold { weeklyAlerted = false }
     }
 
     func checkAndNotify(response: UsageResponse) {
@@ -63,9 +79,8 @@ final class NotificationManager {
 
         let sessionUtil = response.fiveHour.utilization
 
-        // Detect session reset (usage drops significantly = new 5h window)
+        // Session reset detection
         if sessionResetAlertEnabled, let prev = previousSessionUtil, prev >= 50, sessionUtil < 10 {
-            NSLog("[Notifications] Session reset detected: \(Int(prev))% → \(Int(sessionUtil))%")
             sendNotification(
                 title: "Claude Session Reset",
                 body: "Your 5-hour session has reset. You're good to go!"
@@ -74,9 +89,9 @@ final class NotificationManager {
         }
         previousSessionUtil = sessionUtil
 
+        // Session threshold
         resetSessionAlertIfNeeded(utilization: sessionUtil)
         if shouldAlertForSession(utilization: sessionUtil) {
-            NSLog("[Notifications] Session threshold hit: \(Int(sessionUtil))% >= \(Int(sessionThreshold))%")
             sendNotification(
                 title: "Claude Session Usage",
                 body: "5-hour usage at \(Int(sessionUtil))%"
@@ -84,24 +99,33 @@ final class NotificationManager {
             markSessionAlerted()
         }
 
+        // Weekly threshold
         let weeklyUtil = response.sevenDay.utilization
         resetWeeklyAlertIfNeeded(utilization: weeklyUtil)
         if shouldAlertForWeekly(utilization: weeklyUtil) {
-            NSLog("[Notifications] Weekly threshold hit: \(Int(weeklyUtil))% >= \(Int(weeklyThreshold))%")
             sendNotification(
                 title: "Claude Weekly Usage",
                 body: "7-day usage at \(Int(weeklyUtil))%"
             )
             markWeeklyAlerted()
         }
+
+        // Extra usage threshold
+        if extraUsageAlertsEnabled, !extraUsageAlerted,
+           let extra = response.extraUsage, extra.isEnabled {
+            let spent = Double(extra.usedCredits) / 100.0
+            if spent >= extraUsageThreshold {
+                sendNotification(
+                    title: "Claude Extra Usage",
+                    body: "Extra usage at $\(String(format: "%.2f", spent))"
+                )
+                extraUsageAlerted = true
+            }
+        }
     }
 
     private func sendNotification(title: String, body: String) {
-        guard Bundle.main.bundleIdentifier != nil else {
-            NSLog("[Notifications] No bundle identifier — cannot send notification")
-            return
-        }
-
+        guard Bundle.main.bundleIdentifier != nil else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
@@ -112,12 +136,6 @@ final class NotificationManager {
             content: content,
             trigger: nil
         )
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error {
-                NSLog("[Notifications] Failed to deliver: \(error.localizedDescription)")
-            } else {
-                NSLog("[Notifications] Delivered: \(title) — \(body)")
-            }
-        }
+        UNUserNotificationCenter.current().add(request)
     }
 }

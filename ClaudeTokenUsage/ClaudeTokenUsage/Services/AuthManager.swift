@@ -9,12 +9,13 @@ enum AuthMethod: String, CaseIterable, Sendable {
 @Observable
 final class AuthManager {
     private static let defaults = UserDefaults(suiteName: "com.claudetokenusage.app") ?? .standard
+    private static let keychainService = "com.claudetokenusage.sessionkey"
 
     var authMethod: AuthMethod {
         didSet { Self.defaults.set(authMethod.rawValue, forKey: "authMethod") }
     }
-    var sessionCookie: String {
-        didSet { Self.defaults.set(sessionCookie, forKey: "sessionCookie") }
+    var sessionCookie: String = "" {
+        didSet { saveSessionCookieToKeychain(sessionCookie) }
     }
     var oauthToken: String = ""
     var organizationId: String {
@@ -30,16 +31,40 @@ final class AuthManager {
         let d = Self.defaults
         let saved = d.string(forKey: "authMethod") ?? ""
         self.authMethod = AuthMethod(rawValue: saved) ?? .oauth
-        self.sessionCookie = d.string(forKey: "sessionCookie") ?? ""
         self.organizationId = d.string(forKey: "organizationId") ?? ""
+        self.sessionCookie = Self.loadCookieFromKeychain() ?? ""
+    }
+
+    private static func loadCookieFromKeychain() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecSuccess, let data = result as? Data {
+            return String(data: data, encoding: .utf8)
+        }
+        // Migration: check old UserDefaults storage
+        if let old = defaults.string(forKey: "sessionCookie"), !old.isEmpty {
+            let saveQuery: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: keychainService,
+                kSecValueData as String: Data(old.utf8)
+            ]
+            SecItemAdd(saveQuery as CFDictionary, nil)
+            defaults.removeObject(forKey: "sessionCookie")
+            return old
+        }
+        return nil
     }
 
     var isConfigured: Bool {
         switch authMethod {
-        case .oauth:
-            return !oauthToken.isEmpty
-        case .sessionCookie:
-            return !sessionCookie.isEmpty
+        case .oauth: return !oauthToken.isEmpty
+        case .sessionCookie: return !sessionCookie.isEmpty
         }
     }
 
@@ -53,9 +78,7 @@ final class AuthManager {
             ]
         case .sessionCookie:
             guard !sessionCookie.isEmpty else { return [:] }
-            return [
-                "Cookie": "sessionKey=\(sessionCookie)"
-            ]
+            return ["Cookie": "sessionKey=\(sessionCookie)"]
         }
     }
 
@@ -66,10 +89,8 @@ final class AuthManager {
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
-
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-
         if status == errSecSuccess, let data = result as? Data,
            let token = String(data: data, encoding: .utf8) {
             oauthToken = token
@@ -85,9 +106,7 @@ final class AuthManager {
             request.setValue(value, forHTTPHeaderField: key)
         }
 
-        print("[AuthManager] Fetching organizations...")
         let (data, response) = try await URLSession.shared.data(for: request)
-        print("[AuthManager] Got response: \(String(data: data, encoding: .utf8) ?? "nil")")
 
         guard let httpResponse = response as? HTTPURLResponse else {
             connectionStatus = .error("No HTTP response")
@@ -95,13 +114,11 @@ final class AuthManager {
         }
 
         guard httpResponse.statusCode == 200 else {
-            let body = String(data: data, encoding: .utf8) ?? ""
-            print("API error: HTTP \(httpResponse.statusCode) — \(body)")
             connectionStatus = .error("HTTP \(httpResponse.statusCode)")
             throw URLError(.badServerResponse)
         }
 
-        let orgs = try JSONDecoder.apiDecoder.decode([Organization].self, from: data)
+        let orgs = try JSONDecoder.makeAPIDecoder().decode([Organization].self, from: data)
         if let firstOrg = orgs.first {
             organizationId = firstOrg.uuid
             connectionStatus = .connected
@@ -109,4 +126,20 @@ final class AuthManager {
             connectionStatus = .error("No organizations found")
         }
     }
+
+    // MARK: - Keychain helpers
+
+    private func saveSessionCookieToKeychain(_ value: String) {
+        let data = Data(value.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: Self.keychainService,
+        ]
+        SecItemDelete(query as CFDictionary)
+        guard !value.isEmpty else { return }
+        var add = query
+        add[kSecValueData as String] = data
+        SecItemAdd(add as CFDictionary, nil)
+    }
+
 }

@@ -29,7 +29,7 @@ final class UsageResponseTests: XCTestCase {
         }
         """.data(using: .utf8)!
 
-        let response = try JSONDecoder.apiDecoder.decode(UsageResponse.self, from: json)
+        let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
 
         XCTAssertEqual(response.fiveHour.utilization, 42.5)
         XCTAssertNotNil(response.fiveHour.resetsAt)
@@ -55,7 +55,7 @@ final class UsageResponseTests: XCTestCase {
         }
         """.data(using: .utf8)!
 
-        let response = try JSONDecoder.apiDecoder.decode(UsageResponse.self, from: json)
+        let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
 
         XCTAssertEqual(response.fiveHour.utilization, 0.0)
         XCTAssertNil(response.sevenDayOpus)
@@ -73,7 +73,7 @@ final class UsageResponseTests: XCTestCase {
         ]
         """.data(using: .utf8)!
 
-        let orgs = try JSONDecoder.apiDecoder.decode([Organization].self, from: json)
+        let orgs = try JSONDecoder.makeAPIDecoder().decode([Organization].self, from: json)
 
         XCTAssertEqual(orgs.count, 1)
         XCTAssertEqual(orgs[0].uuid, "d3bc1234-abcd-5678-ef90-000000000000")

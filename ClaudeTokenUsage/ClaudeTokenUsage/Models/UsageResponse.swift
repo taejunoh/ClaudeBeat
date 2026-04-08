@@ -40,25 +40,26 @@ struct ExtraUsage: Codable, Sendable {
 
 struct Organization: Codable, Sendable {
     let uuid: String
-    let name: String
+    let name: String?
 }
 
 extension JSONDecoder {
-    static let apiDecoder: JSONDecoder = {
+    static func makeAPIDecoder() -> JSONDecoder {
         let decoder = JSONDecoder()
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallback = ISO8601DateFormatter()
+        fallback.formatOptions = [.withInternetDateTime]
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
+            if let date = formatter.date(from: dateString) { return date }
+            if let date = fallback.date(from: dateString) { return date }
             throw DecodingError.dataCorruptedError(
                 in: container,
                 debugDescription: "Cannot decode date: \(dateString)"
             )
         }
         return decoder
-    }()
+    }
 }

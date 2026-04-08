@@ -6,7 +6,7 @@ struct ExtraUsageView: View {
 
     private var progress: Double {
         guard monthlyLimit > 0 else { return 0 }
-        return Double(usedCredits) / Double(monthlyLimit)
+        return min(Double(usedCredits) / Double(monthlyLimit), 1.0)
     }
 
     private var usedDollars: String {

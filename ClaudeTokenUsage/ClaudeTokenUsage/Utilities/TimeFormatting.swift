@@ -1,6 +1,11 @@
 import Foundation
 
 enum TimeFormatting {
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
     /// Compact format for menu bar: "2h", "45m", "<1m", "now"
     static func menuBarString(until date: Date) -> String {
         let seconds = date.timeIntervalSinceNow
@@ -29,9 +34,7 @@ enum TimeFormatting {
 
         // More than 24h: show date
         if hours >= 24 {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d"
-            return formatter.string(from: date)
+            return Self.dateFormatter.string(from: date)
         }
 
         if hours >= 1 {

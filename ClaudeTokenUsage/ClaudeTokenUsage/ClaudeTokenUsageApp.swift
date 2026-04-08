@@ -15,6 +15,7 @@ struct ClaudeTokenUsageApp: App {
     }
 }
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     let usageState = UsageState()
     let authManager = AuthManager()
@@ -24,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var refreshTimer: Timer?
+    private var pollingObserver: NSObjectProtocol?
     private var onboardingWindow: NSWindow?
     private var settingsWindow: NSWindow?
     private var eventMonitor: Any?
@@ -36,7 +38,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Create status item with custom two-line view
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 80, height: 22))
@@ -58,7 +59,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.action = #selector(togglePopover)
         statusItem.button?.target = self
 
-        // Create popover
         popover = NSPopover()
         popover.contentSize = NSSize(width: 300, height: 400)
         popover.behavior = .transient
@@ -67,9 +67,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 usageState: usageState,
                 onRefresh: { [weak self] in
                     guard let self else { return }
-                    Task {
-                        await self.usageService?.fetchUsage()
-                        await MainActor.run { self.updateMenuBarText() }
+                    Task { [weak self] in
+                        await self?.usageService?.fetchUsage()
+                        await MainActor.run { self?.updateMenuBarText() }
                     }
                 },
                 onSettings: { [weak self] in
@@ -79,13 +79,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             )
         )
 
-        // Start refresh timer
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.updateMenuBarText()
         }
 
-        // Setup services
+        // Watch for polling interval changes in UserDefaults
+        pollingObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, let service = self.usageService else { return }
+            let interval = UserDefaults.standard.double(forKey: "pollingInterval")
+            let newInterval = interval > 0 ? interval : 60
+            if service.pollingInterval != newInterval {
+                service.pollingInterval = newInterval
+                service.startPolling()
+            }
+        }
+
         setupServices()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+        usageService?.stopPolling()
+        if let eventMonitor {
+            NSEvent.removeMonitor(eventMonitor)
+        }
+        eventMonitor = nil
+        if let pollingObserver {
+            NotificationCenter.default.removeObserver(pollingObserver)
+        }
+        pollingObserver = nil
     }
 
     @objc private func togglePopover() {
@@ -122,13 +149,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateMenuBarText() {
         let displayMode = UserDefaults.standard.string(forKey: "menuBarDisplay") ?? MenuBarDisplay.session.rawValue
-        let showResetTime = UserDefaults.standard.bool(forKey: "showResetTime") || !UserDefaults.standard.dictionaryRepresentation().keys.contains("showResetTime")
+        let showResetTime = UserDefaults.standard.object(forKey: "showResetTime") as? Bool ?? true
 
         let mode = MenuBarDisplay(rawValue: displayMode) ?? .session
 
         switch mode {
         case .session:
-            // Single line: 5h: 56% · 4h 11m
             topLabel?.stringValue = ""
             topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
             var line = ["5h: \(usageState.menuBarPercentage)"]
@@ -140,7 +166,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             topLabel?.frame = NSRect(x: 0, y: 22, width: 0, height: 0)
 
         case .weekly:
-            // Single line: 7d: 7% · Apr 14
             topLabel?.stringValue = ""
             topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
             var line = ["7d: \(usageState.weeklyPercentage)"]
@@ -152,7 +177,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             topLabel?.frame = NSRect(x: 0, y: 22, width: 0, height: 0)
 
         case .both:
-            // Two lines — restore smaller font
             topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
             bottomLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
             topLabel?.frame.origin.y = 10
@@ -167,7 +191,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             bottomLabel?.stringValue = bottom.joined(separator: " ")
         }
 
-        // Auto-size width
         let topWidth = topLabel?.attributedStringValue.size().width ?? 0
         let bottomWidth = bottomLabel?.attributedStringValue.size().width ?? 0
         let width = max(topWidth, bottomWidth) + 14
@@ -192,31 +215,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         usageService = service
 
         if authManager.isConfigured {
-            Task {
-                try? await authManager.fetchOrganizationId()
-                await service.fetchUsage()
-                await MainActor.run { updateMenuBarText() }
-                service.startPolling()
+            Task { [weak self] in
+                try? await self?.authManager.fetchOrganizationId()
+                await self?.usageService?.fetchUsage()
+                await MainActor.run { self?.updateMenuBarText() }
+                self?.usageService?.startPolling()
             }
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.openOnboarding()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.openOnboarding()
             }
         }
     }
 
     private func openOnboarding() {
         let onboardingView = OnboardingView(authManager: authManager) { [weak self] in
-            guard let self else { return }
-            self.onboardingWindow?.close()
-            self.onboardingWindow = nil
-            Task {
-                if self.authManager.organizationId.isEmpty {
-                    try? await self.authManager.fetchOrganizationId()
+            self?.onboardingWindow?.close()
+            self?.onboardingWindow = nil
+            Task { [weak self] in
+                if self?.authManager.organizationId.isEmpty == true {
+                    try? await self?.authManager.fetchOrganizationId()
                 }
-                await self.usageService?.fetchUsage()
-                await MainActor.run { self.updateMenuBarText() }
-                self.usageService?.startPolling()
+                await self?.usageService?.fetchUsage()
+                await MainActor.run { self?.updateMenuBarText() }
+                self?.usageService?.startPolling()
             }
         }
 

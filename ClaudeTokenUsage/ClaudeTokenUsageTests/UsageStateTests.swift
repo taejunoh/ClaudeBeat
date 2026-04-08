@@ -1,6 +1,7 @@
 import XCTest
 @testable import ClaudeTokenUsage
 
+@MainActor
 final class UsageStateTests: XCTestCase {
 
     func testMenuBarText_withData() {
