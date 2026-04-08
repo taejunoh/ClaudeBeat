@@ -2,22 +2,20 @@
 
 A native macOS menu bar app that monitors your Claude AI token usage in real-time.
 
+<p align="center">
+  <a href="https://github.com/taejunoh/claude-token-usage/releases/latest/download/ClaudeTokenUsage.zip">
+    <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download-Claude_Token_Usage-E8845C?style=for-the-badge&logoColor=white" alt="Download" height="48">
+  </a>
+</p>
+<p align="center">
+  macOS 14+ &nbsp;·&nbsp; No Xcode needed &nbsp;·&nbsp; Just unzip and run
+</p>
+
 ![macOS](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.10-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![Release](https://img.shields.io/github/v/release/taejunoh/claude-token-usage)](https://github.com/taejunoh/claude-token-usage/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/taejunoh/claude-token-usage/total)](https://github.com/taejunoh/claude-token-usage/releases)
-
-## Download
-
-[![Download](https://img.shields.io/badge/Download-Latest-blue?style=for-the-badge)](https://github.com/taejunoh/claude-token-usage/releases/latest/download/ClaudeTokenUsage.zip)
-
-1. Download the zip file
-2. Unzip
-3. Drag `ClaudeTokenUsage.app` to Applications
-4. Open and follow the setup instructions
-
-> Requires macOS 14 (Sonoma) or later.
 
 ## Screenshots
 
