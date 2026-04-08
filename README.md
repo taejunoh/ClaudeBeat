@@ -19,12 +19,22 @@ A native macOS menu bar app that monitors your Claude AI token usage in real-tim
 - **Auto-refresh** — Polls every 60 seconds (configurable 15s–5min)
 - **Launch at login** — Optional auto-start
 
-## Installation
+## Download
+
+[![Download](https://img.shields.io/badge/Download-v1.0.0-blue?style=for-the-badge)](https://github.com/taejunoh/claude-token-usage/releases/latest/download/ClaudeTokenUsage.zip)
+
+1. Download the zip file
+2. Unzip
+3. Drag `ClaudeTokenUsage.app` to Applications
+4. Open and follow the setup instructions
+
+> Requires macOS 14 (Sonoma) or later.
+
+## Build from Source
 
 ### Prerequisites
 
-- macOS 14 (Sonoma) or later
-- [Xcode](https://developer.apple.com/xcode/) (for building)
+- [Xcode](https://developer.apple.com/xcode/)
 - [xcodegen](https://github.com/yonaskolb/XcodeGen) (optional, for regenerating the project)
 
 ### Build & Run
