@@ -26,9 +26,11 @@
 		9DDF48B0880AE273F445AF92 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CA4A6933EBCF5B7B59E1D /* NotificationManager.swift */; };
 		A0E106A02EC05777FA1E13C6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AF812B63901466A7BB6CFCB /* OnboardingView.swift */; };
 		A5979BDC857F245B49A94653 /* ClaudeTokenUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8043AFF3C36E9EADBDF818B /* ClaudeTokenUsageTests.swift */; };
+		C2E60886660477809AEAE726 /* Info 2.plist in Resources */ = {isa = PBXBuildFile; fileRef = 80EDA240C3A1D4CA80D6C071 /* Info 2.plist */; };
 		C4C198E2ABD963C7CA32D188 /* UsageResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94FB10EE088CB453FC7D0853 /* UsageResponseTests.swift */; };
 		C4C1DF007AD3CC18F5A676E9 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710669B6C98AAA25D46D6C17 /* AuthManager.swift */; };
 		C575C714028FD4A91357E2FE /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF16C275B9F89AF727F7B4B /* GeneralSettingsView.swift */; };
+		C61E4B01B7899A5BF3284DA4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A7FAB23F143E7BE8FC2F983 /* Assets.xcassets */; };
 		CE2A7E4AD0360A273C33E50E /* UsageStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3BFF7D1ABF86D8F94A0729 /* UsageStateTests.swift */; };
 		CFF4272ABDECF30FDF96FD23 /* NotificationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926E61E9FE2E0743B6705F4D /* NotificationManagerTests.swift */; };
 /* End PBXBuildFile section */
@@ -44,6 +46,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A7FAB23F143E7BE8FC2F983 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1AAD3765BFF5F03A7D1A695C /* UsageGaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageGaugeView.swift; sourceTree = "<group>"; };
 		2A0474E736244977C2834DD6 /* AlertSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertSettingsView.swift; sourceTree = "<group>"; };
 		2A7F100E9BA262CA6C62D4D1 /* TimeFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatting.swift; sourceTree = "<group>"; };
@@ -56,6 +59,7 @@
 		6D381B1AC673987173628117 /* ClaudeTokenUsageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeTokenUsageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6EA6229E677CE60575CC85AB /* AuthManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManagerTests.swift; sourceTree = "<group>"; };
 		710669B6C98AAA25D46D6C17 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		80EDA240C3A1D4CA80D6C071 /* Info 2.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info 2.plist"; sourceTree = "<group>"; };
 		926E61E9FE2E0743B6705F4D /* NotificationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManagerTests.swift; sourceTree = "<group>"; };
 		94FB10EE088CB453FC7D0853 /* UsageResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageResponseTests.swift; sourceTree = "<group>"; };
 		A0CE1235B0B31BD8019BD8E0 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -129,8 +133,10 @@
 		BED70C3DA689BE33F0CA50AA /* ClaudeTokenUsage */ = {
 			isa = PBXGroup;
 			children = (
+				0A7FAB23F143E7BE8FC2F983 /* Assets.xcassets */,
 				5B8D8BE48A7BC00B8B6A0CD8 /* ClaudeTokenUsage.entitlements */,
 				AB185A967B1487D0540EDEFF /* ClaudeTokenUsageApp.swift */,
+				80EDA240C3A1D4CA80D6C071 /* Info 2.plist */,
 				260DE6F9D52F26BF2BE76672 /* Models */,
 				FBDF372FE4FEB1F619B5CD9D /* Services */,
 				D4E30BE3AD42D3FFFA3542EF /* Utilities */,
@@ -179,6 +185,7 @@
 			buildConfigurationList = 19FF8FD7CD1D668671A08910 /* Build configuration list for PBXNativeTarget "ClaudeTokenUsage" */;
 			buildPhases = (
 				BF26EDA8E9000E37C8289FA2 /* Sources */,
+				B6EC6F0F172C1650EF20A791 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -243,6 +250,18 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B6EC6F0F172C1650EF20A791 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C61E4B01B7899A5BF3284DA4 /* Assets.xcassets in Resources */,
+				C2E60886660477809AEAE726 /* Info 2.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1DE53A5FBBE3AD6415ACF478 /* Sources */ = {
