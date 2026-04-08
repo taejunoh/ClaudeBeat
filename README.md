@@ -98,6 +98,14 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 ## Troubleshooting
 
+### "ClaudeTokenUsage" Not Opened (Apple could not verify)
+This is normal for apps not notarized with Apple. To open:
+1. Right-click (or Control+click) the app
+2. Select **Open**
+3. Click **Open** in the dialog
+
+You only need to do this once. After that, the app opens normally.
+
 ### "Failed to fetch organizations" or HTTP 403
 Your session key has expired. Get a fresh one from the browser:
 1. Go to [claude.ai](https://claude.ai) → DevTools → Application → Cookies → `https://a.claude.ai`
