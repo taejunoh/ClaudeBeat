@@ -14,7 +14,8 @@ A native macOS menu bar app that monitors your Claude AI token usage in real-tim
   - Weekly (7d) breakdown: All models + Sonnet only with individual reset times
   - Extra usage credits ($used / $limit)
 - **Session reset notification** — Get notified when your 5h session resets so you can get back to work
-- **Threshold alerts** — macOS notifications when session or weekly usage hits your configured threshold (default 80%)
+- **Threshold alerts** — macOS notifications when session, weekly, or extra usage hits your configured threshold
+- **Secure credential storage** — Session cookie stored in macOS Keychain, not plaintext
 - **Auto-refresh** — Polls every 60 seconds (configurable 15s–5min)
 - **Launch at login** — Optional auto-start
 
@@ -55,7 +56,7 @@ On first launch, an onboarding window will appear:
 4. Find `sessionKey` and copy its value
 5. Click **Paste** in the app, then **Connect**
 
-Your session key is saved locally and persists across app restarts.
+Your session key is securely stored in the macOS Keychain and persists across app restarts.
 
 ## Menu Bar Display
 
@@ -63,31 +64,31 @@ Your session key is saved locally and persists across app restarts.
 |---|---|
 | Current Session | `5h: 82% · 2h 54m` |
 | Weekly Limit | `7d: 7% · Apr 14` |
-| Both | `5h: 82% · 2h 54m` (top) `7d: 7% · Apr 14` (bottom) |
+| Both | `5h: 82% · 2h 54m` (top line) / `7d: 7% · Apr 14` (bottom line) |
 
 ## Settings
 
-Access settings via the gear icon in the popover. Settings use a sidebar layout with four tabs:
+Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 | Tab | Options |
 |---|---|
 | **Auth** | Switch between OAuth (Claude Code) and Session Cookie, test connection |
-| **Display** | Choose menu bar mode (Session / Weekly / Both), toggle reset time |
-| **Alerts** | Session reset notification, threshold alerts per metric (Session, Weekly, Extra Usage) |
+| **Display** | Menu bar mode (Session / Weekly / Both), toggle reset time visibility |
+| **Alerts** | Session reset notification, threshold alerts per metric (Session 5h, Weekly 7d, Extra Usage) |
 | **General** | Polling interval (15s–5min), launch at login, version info |
 
 ## Architecture
 
 ```
 ClaudeTokenUsage/
-├── ClaudeTokenUsageApp.swift      # AppDelegate + NSStatusItem + NSPopover
+├── ClaudeTokenUsageApp.swift      # @MainActor AppDelegate + NSStatusItem + NSPopover
 ├── Models/
 │   ├── UsageResponse.swift        # API response models (Codable)
-│   └── UsageState.swift           # Observable app state
+│   └── UsageState.swift           # @MainActor @Observable app state
 ├── Services/
-│   ├── AuthManager.swift          # OAuth + session cookie auth
-│   ├── UsageService.swift         # API client + polling loop
-│   └── NotificationManager.swift  # Session reset + threshold alerts
+│   ├── AuthManager.swift          # OAuth + session cookie auth (Keychain storage)
+│   ├── UsageService.swift         # API client + async polling loop
+│   └── NotificationManager.swift  # @MainActor session reset + threshold alerts (persisted)
 ├── Views/
 │   ├── PopoverView.swift          # Main popover container
 │   ├── UsageGaugeView.swift       # Circular gauge component
@@ -102,7 +103,7 @@ ClaudeTokenUsage/
 │       ├── AlertSettingsView.swift
 │       └── GeneralSettingsView.swift
 └── Utilities/
-    └── TimeFormatting.swift       # Reset time formatting helpers
+    └── TimeFormatting.swift       # Reset time formatting (cached formatters)
 ```
 
 ## API
@@ -115,12 +116,19 @@ GET https://claude.ai/api/organizations/{org_id}/usage
 
 Returns 5-hour session utilization, 7-day weekly limits (all models + Sonnet), and extra usage credits.
 
+## Security
+
+- Session cookie is stored in macOS Keychain (not plaintext UserDefaults)
+- Automatic migration from older plaintext storage on first launch
+- OAuth tokens read from Claude Code's Keychain entry (read-only)
+
 ## Tech Stack
 
-- **Swift + SwiftUI** — Native macOS app
+- **Swift + SwiftUI** — Native macOS app, macOS 14+
 - **AppKit** — `NSStatusItem` for reliable menu bar updates, `NSPopover` for dashboard
+- **Security** — macOS Keychain for credential storage
 - **UserNotifications** — Session reset and threshold alerts
-- **Swift Concurrency** — async/await for API polling
+- **Swift Concurrency** — async/await with `@MainActor` for thread safety
 - **No third-party dependencies**
 
 ## License
