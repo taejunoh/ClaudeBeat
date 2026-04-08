@@ -202,7 +202,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupServices() {
-        authManager.loadOAuthTokenFromKeychain()
+        if authManager.authMethod == .oauth {
+            authManager.loadOAuthTokenFromKeychain()
+        }
         notificationManager.requestPermission()
 
         let service = UsageService(

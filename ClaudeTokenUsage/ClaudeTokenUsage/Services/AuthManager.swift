@@ -39,6 +39,7 @@ final class AuthManager {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: "sessionKey",
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
@@ -134,6 +135,7 @@ final class AuthManager {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.keychainService,
+            kSecAttrAccount as String: "sessionKey",
         ]
         SecItemDelete(query as CFDictionary)
         guard !value.isEmpty else { return }
