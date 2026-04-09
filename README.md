@@ -44,6 +44,18 @@
 - **Auto-refresh** — Polls every 60 seconds (configurable 15s-5min)
 - **Launch at login** — Optional auto-start
 
+## Installation
+
+### Homebrew (recommended)
+
+```bash
+brew install --cask taejunoh/tap/claudetokenusage
+```
+
+### Direct Download
+
+Download from [GitHub Releases](https://github.com/taejunoh/ClaudeTokenUsage/releases/latest), unzip, and drag to Applications.
+
 ## Getting Started
 
 ### Quick Start
