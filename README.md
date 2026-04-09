@@ -3,7 +3,7 @@
 <p align="center">A native macOS menu bar app that monitors your Claude AI token usage in real-time.</p>
 
 <p align="center">
-  <a href="https://github.com/taejunoh/claude-token-usage/releases/latest/download/ClaudeTokenUsage.zip">
+  <a href="https://github.com/taejunoh/ClaudeTokenUsage/releases/latest/download/ClaudeTokenUsage.zip">
     <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download-Claude_Token_Usage-E8845C?style=for-the-badge&logoColor=white" alt="Download" height="48">
   </a>
 </p>
@@ -16,8 +16,8 @@
   <img src="https://img.shields.io/badge/Swift-5.10-orange" alt="Swift">
   <img src="https://img.shields.io/badge/Notarized-Apple-black?logo=apple" alt="Notarized">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <a href="https://github.com/taejunoh/claude-token-usage/releases/latest"><img src="https://img.shields.io/github/v/release/taejunoh/claude-token-usage" alt="Release"></a>
-  <a href="https://github.com/taejunoh/claude-token-usage/releases"><img src="https://img.shields.io/github/downloads/taejunoh/claude-token-usage/total" alt="Downloads"></a>
+  <a href="https://github.com/taejunoh/ClaudeTokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/taejunoh/ClaudeTokenUsage" alt="Release"></a>
+  <a href="https://github.com/taejunoh/ClaudeTokenUsage/releases"><img src="https://img.shields.io/github/downloads/taejunoh/ClaudeTokenUsage/total" alt="Downloads"></a>
 </p>
 
 ## Screenshots
@@ -120,7 +120,7 @@ If you only see a blank space in the menu bar:
 This happens once when the app first accesses the Keychain. Click "Always Allow" to prevent future prompts.
 
 ### Extra Usage shows wrong amounts
-The API returns values in cents. The app converts to dollars (e.g., 2629 cents → $26.29). If amounts look wrong, please [open an issue](https://github.com/taejunoh/claude-token-usage/issues).
+The API returns values in cents. The app converts to dollars (e.g., 2629 cents → $26.29). If amounts look wrong, please [open an issue](https://github.com/taejunoh/ClaudeTokenUsage/issues).
 
 
 ## Security
