@@ -3,16 +3,16 @@
 <p align="center">A native macOS menu bar app that monitors your Claude AI token usage in real-time.</p>
 
 <p align="center">
+  <a href="https://taejunoh.com/ClaudeTokenUsage/">Website</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/taejunoh/ClaudeTokenUsage/releases/latest/download/ClaudeTokenUsage.zip">
     <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download-Claude_Token_Usage-E8845C?style=for-the-badge&logoColor=white" alt="Download" height="48">
   </a>
 </p>
 <p align="center">
   macOS 14+ &nbsp;·&nbsp; Verified by Apple &nbsp;·&nbsp; Just unzip and run
-</p>
-
-<p align="center">
-  <a href="https://taejunoh.com/ClaudeTokenUsage/">Website</a>
 </p>
 
 <p align="center">
