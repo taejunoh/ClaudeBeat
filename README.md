@@ -8,7 +8,11 @@
   </a>
 </p>
 <p align="center">
-  macOS 14+ &nbsp;·&nbsp; No Xcode needed &nbsp;·&nbsp; Just unzip and run
+  macOS 14+ &nbsp;·&nbsp; Apple Notarized &nbsp;·&nbsp; Just unzip and run
+</p>
+
+<p align="center">
+  <a href="https://taejunoh.com/ClaudeTokenUsage/">Website</a>
 </p>
 
 <p align="center">
@@ -138,16 +142,6 @@ The API returns values in cents. The app converts to dollars (e.g., 2629 cents �
 - **UserNotifications** — Session reset and threshold alerts
 - **Swift Concurrency** — async/await with `@MainActor` for thread safety
 - **No third-party dependencies**
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 
