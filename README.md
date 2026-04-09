@@ -14,6 +14,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS">
   <img src="https://img.shields.io/badge/Swift-5.10-orange" alt="Swift">
+  <img src="https://img.shields.io/badge/Notarized-Apple-black?logo=apple" alt="Notarized">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <a href="https://github.com/taejunoh/claude-token-usage/releases/latest"><img src="https://img.shields.io/github/v/release/taejunoh/claude-token-usage" alt="Release"></a>
   <a href="https://github.com/taejunoh/claude-token-usage/releases"><img src="https://img.shields.io/github/downloads/taejunoh/claude-token-usage/total" alt="Downloads"></a>
@@ -98,14 +99,6 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 ## Troubleshooting
 
-### "ClaudeTokenUsage" Not Opened (Apple could not verify)
-This is normal for apps not notarized with Apple. To open:
-1. Right-click (or Control+click) the app
-2. Select **Open**
-3. Click **Open** in the dialog
-
-You only need to do this once. After that, the app opens normally.
-
 ### "Failed to fetch organizations" or HTTP 403
 Your session key has expired. Get a fresh one from the browser:
 1. Go to [claude.ai](https://claude.ai) → DevTools → Application → Cookies → `https://a.claude.ai`
@@ -119,7 +112,7 @@ If you only see a blank space in the menu bar:
 - Verify your connection in Settings → Auth → Test Connection
 
 ### Notifications not working
-- Make sure you built with **Xcode** (not `swift run`) — notifications require a proper .app bundle
+- Make sure you're running the `.app` bundle (not `swift run`) — notifications require a proper app bundle
 - Check System Settings → Notifications → Claude Token Usage → ensure notifications are allowed
 - Verify alert thresholds in Settings → Alerts
 

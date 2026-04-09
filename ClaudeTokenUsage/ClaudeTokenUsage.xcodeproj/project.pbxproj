@@ -22,11 +22,11 @@
 		78018E30D562BF4B73705098 /* DisplaySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE67ED36EC0A6511F810ABCB /* DisplaySettingsView.swift */; };
 		7965CEB7AA677ABCBB99D819 /* ClaudeTokenUsageApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB185A967B1487D0540EDEFF /* ClaudeTokenUsageApp.swift */; };
 		7B2B4A1FE05A3DE4C6AA06A8 /* UsageGaugeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AAD3765BFF5F03A7D1A695C /* UsageGaugeView.swift */; };
+		889BFB6B7A927757BBADEB37 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = A7AE625B05C551F9A8D8E352 /* AppIcon.icns */; };
 		90864BEF312A4180924E1DC2 /* UsageResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6886654FFB8446CB8808ACB /* UsageResponse.swift */; };
 		9DDF48B0880AE273F445AF92 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CA4A6933EBCF5B7B59E1D /* NotificationManager.swift */; };
 		A0E106A02EC05777FA1E13C6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AF812B63901466A7BB6CFCB /* OnboardingView.swift */; };
 		A5979BDC857F245B49A94653 /* ClaudeTokenUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8043AFF3C36E9EADBDF818B /* ClaudeTokenUsageTests.swift */; };
-		C2E60886660477809AEAE726 /* Info 2.plist in Resources */ = {isa = PBXBuildFile; fileRef = 80EDA240C3A1D4CA80D6C071 /* Info 2.plist */; };
 		C4C198E2ABD963C7CA32D188 /* UsageResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94FB10EE088CB453FC7D0853 /* UsageResponseTests.swift */; };
 		C4C1DF007AD3CC18F5A676E9 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710669B6C98AAA25D46D6C17 /* AuthManager.swift */; };
 		C575C714028FD4A91357E2FE /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF16C275B9F89AF727F7B4B /* GeneralSettingsView.swift */; };
@@ -59,10 +59,10 @@
 		6D381B1AC673987173628117 /* ClaudeTokenUsageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeTokenUsageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6EA6229E677CE60575CC85AB /* AuthManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManagerTests.swift; sourceTree = "<group>"; };
 		710669B6C98AAA25D46D6C17 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
-		80EDA240C3A1D4CA80D6C071 /* Info 2.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info 2.plist"; sourceTree = "<group>"; };
 		926E61E9FE2E0743B6705F4D /* NotificationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManagerTests.swift; sourceTree = "<group>"; };
 		94FB10EE088CB453FC7D0853 /* UsageResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageResponseTests.swift; sourceTree = "<group>"; };
 		A0CE1235B0B31BD8019BD8E0 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A7AE625B05C551F9A8D8E352 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		AB185A967B1487D0540EDEFF /* ClaudeTokenUsageApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeTokenUsageApp.swift; sourceTree = "<group>"; };
 		B00F57A30013D1F08F1515D5 /* UsageState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageState.swift; sourceTree = "<group>"; };
 		BE67ED36EC0A6511F810ABCB /* DisplaySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplaySettingsView.swift; sourceTree = "<group>"; };
@@ -121,6 +121,14 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		3D50DB0622953AC00AEA93DF /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A7AE625B05C551F9A8D8E352 /* AppIcon.icns */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		A8EFB9CEE906DF7C1892E5CF = {
 			isa = PBXGroup;
 			children = (
@@ -136,8 +144,8 @@
 				0A7FAB23F143E7BE8FC2F983 /* Assets.xcassets */,
 				5B8D8BE48A7BC00B8B6A0CD8 /* ClaudeTokenUsage.entitlements */,
 				AB185A967B1487D0540EDEFF /* ClaudeTokenUsageApp.swift */,
-				80EDA240C3A1D4CA80D6C071 /* Info 2.plist */,
 				260DE6F9D52F26BF2BE76672 /* Models */,
+				3D50DB0622953AC00AEA93DF /* Resources */,
 				FBDF372FE4FEB1F619B5CD9D /* Services */,
 				D4E30BE3AD42D3FFFA3542EF /* Utilities */,
 				C07195BE0D8F2DC50D123B2A /* Views */,
@@ -226,7 +234,7 @@
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					357E83CD9EF1B655E7B4B389 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 3BMF4LM6TM;
 						ProvisioningStyle = Manual;
 					};
 				};
@@ -256,8 +264,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				889BFB6B7A927757BBADEB37 /* AppIcon.icns in Resources */,
 				C61E4B01B7899A5BF3284DA4 /* Assets.xcassets in Resources */,
-				C2E60886660477809AEAE726 /* Info 2.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,15 +324,16 @@
 		26CA18DDF8A0F0352B8E0250 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ClaudeTokenUsage/ClaudeTokenUsage.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Taejun Oh (3BMF4LM6TM)";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 3BMF4LM6TM;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ClaudeTokenUsage/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -333,7 +342,8 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.claudetokenusage.app;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudetokenusage.macos;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.10;
 			};
@@ -378,15 +388,16 @@
 		99A08E79F6029527218167C3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ClaudeTokenUsage/ClaudeTokenUsage.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Taejun Oh (3BMF4LM6TM)";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 3BMF4LM6TM;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ClaudeTokenUsage/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -395,7 +406,8 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.claudetokenusage.app;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudetokenusage.macos;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.10;
 			};

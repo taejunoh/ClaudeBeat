@@ -18,30 +18,34 @@ targets:
       path: ClaudeTokenUsage/Info.plist
       properties:
         LSUIElement: true
+        CFBundleIconFile: AppIcon
         CFBundleDisplayName: Claude Token Usage
         CFBundleName: ClaudeTokenUsage
-        CFBundleIdentifier: com.claudetokenusage.app
+        CFBundleIdentifier: com.claudetokenusage.macos
         CFBundleShortVersionString: "1.0.0"
         CFBundleVersion: "1"
     entitlements:
       path: ClaudeTokenUsage/ClaudeTokenUsage.entitlements
       properties:
-        com.apple.security.app-sandbox: false
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.claudetokenusage.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.claudetokenusage.macos
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.10"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "-"
-        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_IDENTITY: "Developer ID Application: Taejun Oh (3BMF4LM6TM)"
+        DEVELOPMENT_TEAM: "3BMF4LM6TM"
         CODE_SIGNING_ALLOWED: true
-        CODE_SIGNING_REQUIRED: false
+        CODE_SIGNING_REQUIRED: true
         INFOPLIST_FILE: ClaudeTokenUsage/Info.plist
         GENERATE_INFOPLIST_FILE: false
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ENABLE_HARDENED_RUNTIME: true
+        OTHER_CODE_SIGN_FLAGS: "--timestamp"
 
   ClaudeTokenUsageTests:
     type: bundle.unit-test
