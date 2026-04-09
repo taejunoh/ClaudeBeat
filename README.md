@@ -8,7 +8,7 @@
   </a>
 </p>
 <p align="center">
-  macOS 14+ &nbsp;·&nbsp; Apple Notarized &nbsp;·&nbsp; Just unzip and run
+  macOS 14+ &nbsp;·&nbsp; Verified by Apple &nbsp;·&nbsp; Just unzip and run
 </p>
 
 <p align="center">
