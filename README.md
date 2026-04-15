@@ -36,12 +36,14 @@
 
 - **Menu bar display** — See your current usage at a glance: `5h: 82% · 2h 54m`
 - **Three display modes** — Current Session (5h), Weekly Limit (7d), or Both
-- **Popover dashboard** — Click to see detailed usage with circular gauges
+- **Popover dashboard** — Click to see detailed usage with circular gauges and last-updated timestamp
   - Session (5h) utilization with reset countdown
   - Weekly (7d) breakdown: All models + Sonnet only with individual reset times
-  - Extra usage credits ($used / $limit)
+  - Extra Usage credits as a horizontal bar ($used / $limit with %)
 - **Session reset notification** — Get notified when your 5h session resets so you can get back to work
-- **Threshold alerts** — macOS notifications when session, weekly, or extra usage hits your configured threshold
+- **Threshold alerts** — macOS notifications when usage hits your configured threshold
+  - Session (5h) and Weekly (7d): percentage slider (0–100%)
+  - Extra Usage: dollar amount input ($)
 - **Secure credential storage** — Session cookie stored in macOS Keychain, not plaintext
 - **Auto-refresh** — Polls every 60 seconds (configurable 15s-5min)
 - **Launch at login** — Optional auto-start
@@ -97,7 +99,7 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 |---|---|
 | **Auth** | Switch between OAuth (Claude Code) and Session Cookie, test connection |
 | **Display** | Menu bar mode (Session / Weekly / Both), toggle reset time visibility |
-| **Alerts** | Session reset notification, threshold alerts per metric (Session 5h, Weekly 7d, Extra Usage) |
+| **Alerts** | Session reset notification, threshold alerts — Session (5h) & Weekly (7d) as % slider (0–100%), Extra Usage as $ amount |
 | **General** | Polling interval (15s-5min), launch at login, version info |
 
 ## What's New
