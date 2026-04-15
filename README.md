@@ -30,7 +30,7 @@
 |---|---|---|
 | ![Menu Bar](assets/menubar.png) | ![Popover](assets/popover.png) | ![Settings](assets/settings.png) |
 
-![Notification](assets/notification.png)
+![Notification](assets/alert.png)
 
 ## Features
 
