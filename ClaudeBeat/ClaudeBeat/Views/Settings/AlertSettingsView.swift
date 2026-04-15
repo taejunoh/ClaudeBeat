@@ -15,7 +15,7 @@ struct AlertSettingsView: View {
                     Toggle("Enable", isOn: $notificationManager.sessionAlertsEnabled)
                     HStack {
                         Text("Warn at")
-                        Slider(value: $notificationManager.sessionThreshold, in: 50...100, step: 5)
+                        Slider(value: $notificationManager.sessionThreshold, in: 0...100, step: 5)
                         Text("\(Int(notificationManager.sessionThreshold))%")
                             .monospacedDigit()
                             .frame(width: 35)
@@ -30,7 +30,7 @@ struct AlertSettingsView: View {
                     Toggle("Enable", isOn: $notificationManager.weeklyAlertsEnabled)
                     HStack {
                         Text("Warn at")
-                        Slider(value: $notificationManager.weeklyThreshold, in: 50...100, step: 5)
+                        Slider(value: $notificationManager.weeklyThreshold, in: 0...100, step: 5)
                         Text("\(Int(notificationManager.weeklyThreshold))%")
                             .monospacedDigit()
                             .frame(width: 35)
