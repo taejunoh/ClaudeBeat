@@ -30,6 +30,8 @@
 |---|---|---|
 | ![Menu Bar](assets/menubar.png) | ![Popover](assets/popover.png) | ![Settings](assets/settings.png) |
 
+![Notification](assets/notification.png)
+
 ## Features
 
 - **Menu bar display** — See your current usage at a glance: `5h: 82% · 2h 54m`
