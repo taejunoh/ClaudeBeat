@@ -1,4 +1,4 @@
-# Claude Token Usage — Handover
+# ClaudeBeat — Handover
 
 ## What This Is
 
@@ -13,7 +13,7 @@ A native macOS menu bar app (Swift + SwiftUI) that monitors Claude AI token usag
 - Onboarding window on first launch for session key setup
 - Configurable alert thresholds (session, weekly, extra usage) with master "Enable alerts on refresh" toggle
 - Polling every 60s (configurable 15s–5min)
-- Credentials persisted to `UserDefaults` suite `com.claudetokenusage.macos`
+- Credentials persisted to `UserDefaults` suite `com.claudebeat.macos`
 - Quit button in popover, app doesn't quit when closing Settings
 - Popover closes on click outside
 
@@ -32,8 +32,8 @@ A native macOS menu bar app (Swift + SwiftUI) that monitors Claude AI token usag
 ## Key Files
 
 ```
-ClaudeTokenUsage/
-├── ClaudeTokenUsageApp.swift          # App + AppDelegate, NSStatusItem, popover, onboarding
+ClaudeBeat/
+├── ClaudeBeatApp.swift          # App + AppDelegate, NSStatusItem, popover, onboarding
 ├── Models/
 │   ├── UsageResponse.swift            # API response Codable models + JSONDecoder extension
 │   └── UsageState.swift               # @Observable state with computed menu bar text
@@ -62,30 +62,30 @@ ClaudeTokenUsage/
 
 **SPM (development):**
 ```bash
-cd ClaudeTokenUsage && swift run
+cd ClaudeBeat && swift run
 ```
 Note: Notifications won't work via `swift run` (no bundle identifier).
 
 **Xcode (full .app bundle, ad-hoc):**
 ```bash
-cd ClaudeTokenUsage && xcodebuild -scheme ClaudeTokenUsage -configuration Debug build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+cd ClaudeBeat && xcodebuild -scheme ClaudeBeat -configuration Debug build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
 ```
 
 **Release (notarized):**
 ```bash
-cd ClaudeTokenUsage && xcodebuild -scheme ClaudeTokenUsage -configuration Release clean build \
+cd ClaudeBeat && xcodebuild -scheme ClaudeBeat -configuration Release clean build \
   CODE_SIGN_IDENTITY="Developer ID Application: Taejun Oh (3BMF4LM6TM)" \
   DEVELOPMENT_TEAM="3BMF4LM6TM" ENABLE_HARDENED_RUNTIME=YES \
   OTHER_CODE_SIGN_FLAGS="--timestamp" CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
 # Then notarize:
-ditto -c -k --keepParent build/Release/ClaudeTokenUsage.app ClaudeTokenUsage.zip
-xcrun notarytool submit ClaudeTokenUsage.zip --keychain-profile "notary-profile" --wait
-xcrun stapler staple build/Release/ClaudeTokenUsage.app
+ditto -c -k --keepParent build/Release/ClaudeBeat.app ClaudeBeat.zip
+xcrun notarytool submit ClaudeBeat.zip --keychain-profile "notary-profile" --wait
+xcrun stapler staple build/Release/ClaudeBeat.app
 ```
 
 **Regenerate Xcode project (after adding/removing files):**
 ```bash
-cd ClaudeTokenUsage && xcodegen generate
+cd ClaudeBeat && xcodegen generate
 ```
 
 ## API Details
@@ -101,14 +101,14 @@ cd ClaudeTokenUsage && xcodegen generate
 
 - `MenuBarExtra` label doesn't update reliably in SwiftUI — that's why we use `NSStatusItem` directly
 - `UNUserNotificationCenter.current()` crashes in SPM builds (no bundle identifier) — guarded with `Bundle.main.bundleIdentifier != nil` check
-- `UserDefaults.standard` writes to unpredictable domain in SPM builds — using named suite `com.claudetokenusage.macos`
+- `UserDefaults.standard` writes to unpredictable domain in SPM builds — using named suite `com.claudebeat.macos`
 - Paste (⌘V) doesn't work in text fields in SPM builds — added explicit "Paste" buttons
 - `a.claude.ai` API calls hit Cloudflare challenge — must use `claude.ai` with `Accept: application/json` header
 
 ## Code Signing & Notarization
 
 - **Certificate:** `Developer ID Application: Taejun Oh (3BMF4LM6TM)`
-- **Bundle ID:** `com.claudetokenusage.macos` (changed from `com.claudetokenusage.app` to fix notification icon cache issue)
+- **Bundle ID:** `com.claudebeat.macos` (changed from `com.claudebeat.app` to fix notification icon cache issue)
 - **Entitlements:** App Sandbox (`true`) + Outgoing Network (`true`)
 - **Hardened Runtime:** Enabled + Secure Timestamp
 - **notarytool profile:** `notary-profile` (stored in Keychain via `xcrun notarytool store-credentials`)

@@ -5,7 +5,7 @@ import UserNotifications
 @MainActor
 @Observable
 final class NotificationManager {
-    private static let defaults = UserDefaults(suiteName: "com.claudetokenusage.macos") ?? .standard
+    private static let defaults = UserDefaults(suiteName: "com.claudebeat.macos") ?? .standard
 
     var alertsEnabled: Bool {
         didSet { Self.defaults.set(alertsEnabled, forKey: "alertsEnabled") }

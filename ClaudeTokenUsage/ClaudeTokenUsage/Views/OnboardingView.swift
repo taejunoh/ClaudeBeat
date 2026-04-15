@@ -17,7 +17,7 @@ struct OnboardingView: View {
                     .font(.system(size: 36))
                     .foregroundStyle(.blue)
 
-                Text("Claude Token Usage")
+                Text("ClaudeBeat")
                     .font(.title2.bold())
 
                 Text("Monitor your Claude usage from the menu bar")

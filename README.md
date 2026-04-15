@@ -1,14 +1,14 @@
-# Claude Token Usage
+# ClaudeBeat
 
 <p align="center">A native macOS menu bar app that monitors your Claude AI token usage in real-time.</p>
 
 <p align="center">
-  <a href="https://taejunoh.com/ClaudeTokenUsage/">Website</a>
+  <a href="https://claudebeat.com/">Website</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/taejunoh/ClaudeTokenUsage/releases/latest/download/ClaudeTokenUsage.zip">
-    <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download-Claude_Token_Usage-E8845C?style=for-the-badge&logoColor=white" alt="Download" height="48">
+  <a href="https://github.com/taejunoh/ClaudeBeat/releases/latest/download/ClaudeBeat.zip">
+    <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download-ClaudeBeat-E8845C?style=for-the-badge&logoColor=white" alt="Download" height="48">
   </a>
 </p>
 <p align="center">
@@ -20,8 +20,8 @@
   <img src="https://img.shields.io/badge/Swift-5.10-orange" alt="Swift">
   <img src="https://img.shields.io/badge/Notarized-Apple-black?logo=apple" alt="Notarized">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <a href="https://github.com/taejunoh/ClaudeTokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/taejunoh/ClaudeTokenUsage" alt="Release"></a>
-  <a href="https://github.com/taejunoh/ClaudeTokenUsage/releases"><img src="https://img.shields.io/github/downloads/taejunoh/ClaudeTokenUsage/total" alt="Downloads"></a>
+  <a href="https://github.com/taejunoh/ClaudeBeat/releases/latest"><img src="https://img.shields.io/github/v/release/taejunoh/ClaudeBeat" alt="Release"></a>
+  <a href="https://github.com/taejunoh/ClaudeBeat/releases"><img src="https://img.shields.io/github/downloads/taejunoh/ClaudeBeat/total" alt="Downloads"></a>
 </p>
 
 ## Screenshots
@@ -49,12 +49,12 @@
 ### Homebrew (recommended)
 
 ```bash
-brew install --cask taejunoh/tap/claudetokenusage
+brew install --cask taejunoh/tap/claudebeat
 ```
 
 ### Direct Download
 
-Download from [GitHub Releases](https://github.com/taejunoh/ClaudeTokenUsage/releases/latest), unzip, and drag to Applications.
+Download from [GitHub Releases](https://github.com/taejunoh/ClaudeBeat/releases/latest), unzip, and drag to Applications.
 
 ## Getting Started
 
@@ -129,14 +129,14 @@ If you only see a blank space in the menu bar:
 
 ### Notifications not working
 - Make sure you're running the `.app` bundle (not `swift run`) — notifications require a proper app bundle
-- Check System Settings → Notifications → Claude Token Usage → ensure notifications are allowed
+- Check System Settings → Notifications → ClaudeBeat → ensure notifications are allowed
 - Verify alert thresholds in Settings → Alerts
 
 ### App asks for Keychain password
 This happens once when the app first accesses the Keychain. Click "Always Allow" to prevent future prompts.
 
 ### Extra Usage shows wrong amounts
-The API returns values in cents. The app converts to dollars (e.g., 2629 cents → $26.29). If amounts look wrong, please [open an issue](https://github.com/taejunoh/ClaudeTokenUsage/issues).
+The API returns values in cents. The app converts to dollars (e.g., 2629 cents → $26.29). If amounts look wrong, please [open an issue](https://github.com/taejunoh/ClaudeBeat/issues).
 
 
 ## Security

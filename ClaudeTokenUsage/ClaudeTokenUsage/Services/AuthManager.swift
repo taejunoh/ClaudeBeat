@@ -8,7 +8,7 @@ enum AuthMethod: String, CaseIterable, Sendable {
 
 @Observable
 final class AuthManager {
-    private static let defaults = UserDefaults(suiteName: "com.claudetokenusage.macos") ?? .standard
+    private static let defaults = UserDefaults(suiteName: "com.claudebeat.macos") ?? .standard
     private static let keychainService = "com.claudetokenusage.sessionkey"
 
     var authMethod: AuthMethod {
