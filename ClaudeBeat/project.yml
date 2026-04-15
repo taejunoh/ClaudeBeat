@@ -1,21 +1,21 @@
-name: ClaudeTokenUsage
+name: ClaudeBeat
 options:
-  bundleIdPrefix: com.claudetokenusage
+  bundleIdPrefix: com.claudebeat
   deploymentTarget:
     macOS: "14.0"
   xcodeVersion: "15.0"
   generateEmptyDirectories: false
 
 targets:
-  ClaudeTokenUsage:
+  ClaudeBeat:
     type: application
     platform: macOS
     sources:
-      - path: ClaudeTokenUsage
+      - path: ClaudeBeat
         excludes:
           - Info.plist
     info:
-      path: ClaudeTokenUsage/Info.plist
+      path: ClaudeBeat/Info.plist
       properties:
         LSUIElement: true
         CFBundleIconFile: AppIcon
@@ -25,7 +25,7 @@ targets:
         CFBundleShortVersionString: "1.0.0"
         CFBundleVersion: "1"
     entitlements:
-      path: ClaudeTokenUsage/ClaudeTokenUsage.entitlements
+      path: ClaudeBeat/ClaudeBeat.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
@@ -42,19 +42,19 @@ targets:
         DEVELOPMENT_TEAM: "3BMF4LM6TM"
         CODE_SIGNING_ALLOWED: true
         CODE_SIGNING_REQUIRED: true
-        INFOPLIST_FILE: ClaudeTokenUsage/Info.plist
+        INFOPLIST_FILE: ClaudeBeat/Info.plist
         GENERATE_INFOPLIST_FILE: false
         ASSETCATALOG_COMPILER_APPICON_NAME: ""
         ENABLE_HARDENED_RUNTIME: true
         OTHER_CODE_SIGN_FLAGS: "--timestamp"
 
-  ClaudeTokenUsageTests:
+  ClaudeBeatTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - path: ClaudeTokenUsageTests
+      - path: ClaudeBeatTests
     dependencies:
-      - target: ClaudeTokenUsage
+      - target: ClaudeBeat
     settings:
       base:
         SWIFT_VERSION: "5.10"

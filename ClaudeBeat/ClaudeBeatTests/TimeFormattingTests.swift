@@ -1,5 +1,5 @@
 import XCTest
-@testable import ClaudeTokenUsage
+@testable import ClaudeBeat
 
 final class TimeFormattingTests: XCTestCase {
 
