@@ -394,8 +394,11 @@
         }
 
         @media (max-width: 640px) {
-            .setup-flow { flex-direction: column; gap: 24px; }
+            .setup-flow { flex-direction: column; gap: 32px; }
             .setup-flow::before { display: none; }
+            .setup-step { text-align: left; }
+            .setup-step .setup-dot { margin: 0 0 16px 0; }
+            .setup-step p { padding: 0; }
         }
 
         /* Footer */
