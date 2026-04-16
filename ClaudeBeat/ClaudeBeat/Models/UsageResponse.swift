@@ -28,8 +28,8 @@ struct UsageBucket: Codable, Sendable {
 
 struct ExtraUsage: Codable, Sendable {
     let isEnabled: Bool
-    let monthlyLimit: Int
-    let usedCredits: Int
+    let monthlyLimit: Int?
+    let usedCredits: Int?
 
     enum CodingKeys: String, CodingKey {
         case isEnabled = "is_enabled"

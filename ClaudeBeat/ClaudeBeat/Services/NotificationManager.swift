@@ -113,8 +113,9 @@ final class NotificationManager {
 
         // Extra usage threshold
         if extraUsageAlertsEnabled, !extraUsageAlerted,
-           let extra = response.extraUsage, extra.isEnabled {
-            let spent = Double(extra.usedCredits) / 100.0
+           let extra = response.extraUsage, extra.isEnabled,
+           let usedCredits = extra.usedCredits {
+            let spent = Double(usedCredits) / 100.0
             if spent >= extraUsageThreshold {
                 sendNotification(
                     title: "Claude Extra Usage",

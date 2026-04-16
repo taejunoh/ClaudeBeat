@@ -54,8 +54,8 @@ struct PopoverView: View {
         if let extra = response.extraUsage, extra.isEnabled {
             Divider()
             ExtraUsageView(
-                usedCredits: extra.usedCredits,
-                monthlyLimit: extra.monthlyLimit
+                usedCredits: extra.usedCredits ?? 0,
+                monthlyLimit: extra.monthlyLimit ?? 0
             )
         }
     }
