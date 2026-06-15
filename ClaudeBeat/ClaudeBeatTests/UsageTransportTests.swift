@@ -36,6 +36,21 @@ final class UsageTransportTests: XCTestCase {
         )
     }
 
+    func testClassify_authRedirect() {
+        XCTAssertEqual(
+            TransportClassifier.classify(status: 200, finalPath: "/auth/signin", cfMitigated: false),
+            .needsLogin
+        )
+    }
+
+    func testClassify_cfMitigatedShortCircuitsRegardlessOfStatus() {
+        // cfMitigated must win even when the status would otherwise classify as .ok.
+        XCTAssertEqual(
+            TransportClassifier.classify(status: 200, finalPath: "/api/organizations", cfMitigated: true),
+            .challenge
+        )
+    }
+
     func testClassify_serverError() {
         XCTAssertEqual(
             TransportClassifier.classify(status: 503, finalPath: "/api/organizations", cfMitigated: false),
