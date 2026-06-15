@@ -14,9 +14,25 @@ final class WebSession: NSObject, UsageTransport {
     /// with LoginWebView.
     static let dataStore: WKWebsiteDataStore = .default()
 
+    /// Holds one pending readiness continuation and guarantees it resumes exactly once.
+    private final class ReadyBox {
+        private var continuation: CheckedContinuation<Bool, Never>?
+        init(_ continuation: CheckedContinuation<Bool, Never>) { self.continuation = continuation }
+        func resume(_ value: Bool) {
+            continuation?.resume(returning: value)
+            continuation = nil
+        }
+    }
+
     private let webView: WKWebView
-    private var readyContinuations: [CheckedContinuation<Void, Never>] = []
+    private var readyBoxes: [ReadyBox] = []
     private var didFinishFirstLoad = false
+
+    /// Max wait for the WebView to finish loading before the attempt is treated as a transient
+    /// challenge (the poll loop retries next cycle) rather than hanging forever.
+    private let readyTimeout: Duration = .seconds(20)
+    /// Max time for a single in-page fetch.
+    private let fetchTimeoutMillis = 15000
 
     override init() {
         let config = WKWebViewConfiguration()
@@ -31,29 +47,57 @@ final class WebSession: NSObject, UsageTransport {
         webView.load(URLRequest(url: WebSession.baseURL))
     }
 
-    /// Suspends until the WebView has finished its first navigation (challenge resolved).
-    private func waitUntilReady() async {
-        if didFinishFirstLoad { return }
-        await withCheckedContinuation { continuation in
-            readyContinuations.append(continuation)
+    /// Suspends until the WebView finishes its first navigation, or `readyTimeout` elapses.
+    /// Returns true if ready, false on timeout — callers must not block indefinitely.
+    private func waitUntilReady() async -> Bool {
+        if didFinishFirstLoad { return true }
+        let timeout = readyTimeout
+        return await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            let box = ReadyBox(continuation)
+            readyBoxes.append(box)
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: timeout)
+                guard let self else { return }
+                if let index = self.readyBoxes.firstIndex(where: { $0 === box }) {
+                    self.readyBoxes.remove(at: index)
+                    box.resume(false)
+                }
+            }
         }
+    }
+
+    /// Marks the session ready and resumes every queued continuation exactly once.
+    private func markReady() {
+        didFinishFirstLoad = true
+        let boxes = readyBoxes
+        readyBoxes.removeAll()
+        for box in boxes { box.resume(true) }
     }
 
     // MARK: UsageTransport
 
     func fetchJSON(path: String) async throws -> Data {
-        await waitUntilReady()
+        guard await waitUntilReady() else { throw TransportError.challenge }
 
         let js = """
-        const r = await fetch(path, { headers: { Accept: 'application/json' }, credentials: 'include' });
-        const body = await r.text();
-        return { status: r.status, url: r.url, body: body };
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), timeoutMillis);
+        try {
+            const r = await fetch(path, { headers: { Accept: 'application/json' }, credentials: 'include', signal: ctrl.signal });
+            const body = await r.text();
+            return { status: r.status, url: r.url, body: body };
+        } finally {
+            clearTimeout(t);
+        }
         """
 
         let raw: Any?
         do {
             raw = try await webView.callAsyncJavaScript(
-                js, arguments: ["path": path], in: nil, contentWorld: .page
+                js,
+                arguments: ["path": path, "timeoutMillis": fetchTimeoutMillis],
+                in: nil,
+                contentWorld: .page
             )
         } catch {
             throw TransportError.webView(error.localizedDescription)
@@ -89,6 +133,8 @@ final class WebSession: NSObject, UsageTransport {
 
     /// Injects a pasted sessionKey cookie into the shared store (Google-SSO fallback path).
     func injectSessionCookie(_ value: String) async {
+        // httpOnly is intentionally omitted: the cookie just needs to be attached by the engine
+        // to outgoing fetch() requests; the hidden WebView only ever loads claude.ai itself.
         let cookie = HTTPCookie(properties: [
             .domain: ".claude.ai",
             .path: "/",
@@ -98,34 +144,32 @@ final class WebSession: NSObject, UsageTransport {
         ])
         guard let cookie else { return }
         await WebSession.dataStore.httpCookieStore.setCookie(cookie)
-        // Reload so the new cookie is used by subsequent in-page fetches.
-        webView.load(URLRequest(url: WebSession.baseURL))
+        // Reset readiness BEFORE reloading so a pending wait re-arms against the new navigation.
         didFinishFirstLoad = false
+        webView.load(URLRequest(url: WebSession.baseURL))
     }
 
     /// Clears all website data (cookies/cf_clearance) — used by Log out.
     func clearData() async {
         let types = WKWebsiteDataStore.allWebsiteDataTypes()
         await WebSession.dataStore.removeData(ofTypes: types, modifiedSince: .distantPast)
-        webView.load(URLRequest(url: WebSession.baseURL))
         didFinishFirstLoad = false
+        webView.load(URLRequest(url: WebSession.baseURL))
     }
 }
 
 extension WebSession: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        didFinishFirstLoad = true
-        let continuations = readyContinuations
-        readyContinuations.removeAll()
-        for continuation in continuations { continuation.resume() }
+        markReady()
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        // Treat a hard navigation failure as "ready" so callers don't hang; the fetch will
-        // then surface the real error.
-        didFinishFirstLoad = true
-        let continuations = readyContinuations
-        readyContinuations.removeAll()
-        for continuation in continuations { continuation.resume() }
+        // A hard failure after the response still unblocks callers; the fetch then surfaces the real error.
+        markReady()
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        // Pre-response failures (DNS, refused connection, timeout) must also unblock callers.
+        markReady()
     }
 }
