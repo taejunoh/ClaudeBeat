@@ -62,6 +62,7 @@ final class UsageState {
     func setError(_ message: String) {
         self.isError = true
         self.errorMessage = message
+        self.needsLogin = false
     }
 
     func setNeedsLogin() {

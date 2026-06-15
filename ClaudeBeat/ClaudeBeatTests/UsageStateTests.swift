@@ -83,6 +83,7 @@ final class UsageStateTests: XCTestCase {
         ))
         XCTAssertFalse(state.needsLogin)
         XCTAssertFalse(state.isError)
+        XCTAssertNil(state.errorMessage)
     }
 
     func testSetError_doesNotSetNeedsLogin() {
@@ -90,5 +91,16 @@ final class UsageStateTests: XCTestCase {
         state.setError("HTTP 500")
         XCTAssertTrue(state.isError)
         XCTAssertFalse(state.needsLogin)
+    }
+
+    func testSetError_clearsPriorNeedsLogin() {
+        let state = UsageState()
+        state.setNeedsLogin()
+        XCTAssertTrue(state.needsLogin)
+
+        state.setError("Timeout")
+        XCTAssertTrue(state.isError)
+        XCTAssertFalse(state.needsLogin)
+        XCTAssertEqual(state.errorMessage, "Timeout")
     }
 }
