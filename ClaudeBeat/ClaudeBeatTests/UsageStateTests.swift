@@ -67,4 +67,28 @@ final class UsageStateTests: XCTestCase {
         ))
         XCTAssertNotNil(state.lastUpdated)
     }
+
+    func testNeedsLogin_setAndClearedByUpdate() {
+        let state = UsageState()
+        XCTAssertFalse(state.needsLogin)
+
+        state.setNeedsLogin()
+        XCTAssertTrue(state.needsLogin)
+        XCTAssertTrue(state.isError)
+
+        state.update(with: UsageResponse(
+            fiveHour: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(3600)),
+            sevenDay: UsageBucket(utilization: 5.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
+            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+        ))
+        XCTAssertFalse(state.needsLogin)
+        XCTAssertFalse(state.isError)
+    }
+
+    func testSetError_doesNotSetNeedsLogin() {
+        let state = UsageState()
+        state.setError("HTTP 500")
+        XCTAssertTrue(state.isError)
+        XCTAssertFalse(state.needsLogin)
+    }
 }

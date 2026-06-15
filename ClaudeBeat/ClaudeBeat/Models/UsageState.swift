@@ -11,6 +11,7 @@ final class UsageState {
     private(set) var lastUpdated: Date?
     private(set) var isError: Bool = false
     private(set) var errorMessage: String?
+    private(set) var needsLogin: Bool = false
 
     var menuBarPercentage: String {
         guard let utilization = response?.fiveHour.utilization else { return "--%"}
@@ -55,10 +56,17 @@ final class UsageState {
         self.lastUpdated = Date()
         self.isError = false
         self.errorMessage = nil
+        self.needsLogin = false
     }
 
     func setError(_ message: String) {
         self.isError = true
         self.errorMessage = message
+    }
+
+    func setNeedsLogin() {
+        self.needsLogin = true
+        self.isError = true
+        self.errorMessage = "Login required"
     }
 }
