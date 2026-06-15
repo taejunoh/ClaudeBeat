@@ -30,9 +30,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var eventMonitor: Any?
 
-    private var topLabel: NSTextField!
-    private var bottomLabel: NSTextField!
-
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }
@@ -40,24 +37,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 80, height: 22))
-
-        topLabel = makeLabel(fontSize: 10, alignment: .center)
-        topLabel.stringValue = "Session:"
-        topLabel.frame = NSRect(x: 0, y: 10, width: 80, height: 12)
-
-        bottomLabel = makeLabel(fontSize: 10, alignment: .center)
-        bottomLabel.stringValue = "--% · --"
-        bottomLabel.frame = NSRect(x: 0, y: -1, width: 80, height: 12)
-
-        container.addSubview(topLabel)
-        container.addSubview(bottomLabel)
-
-        statusItem.button?.addSubview(container)
-        statusItem.button?.frame = container.frame
-        statusItem.length = 80
-        statusItem.button?.action = #selector(togglePopover)
-        statusItem.button?.target = self
+        // Render the menu bar text via the button's own title (supported API).
+        // Custom NSView subviews added to statusItem.button no longer render on
+        // macOS 26 (Tahoe)'s Liquid Glass menu bar, which is why the numbers
+        // disappeared after the OS update. attributedTitle lets AppKit lay out
+        // and color the text, adapting to light/dark and menu bar vibrancy.
+        if let button = statusItem.button {
+            button.imagePosition = .noImage
+            (button.cell as? NSButtonCell)?.usesSingleLineMode = false
+            button.action = #selector(togglePopover)
+            button.target = self
+        }
+        updateMenuBarText()
 
         popover = NSPopover()
         popover.contentSize = NSSize(width: 300, height: 400)
@@ -136,69 +127,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         eventMonitor = nil
     }
 
-    private func makeLabel(fontSize: CGFloat, alignment: NSTextAlignment) -> NSTextField {
-        let label = NSTextField(labelWithString: "")
-        label.font = NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .medium)
-        label.alignment = alignment
-        label.textColor = .headerTextColor
-        label.backgroundColor = .clear
-        label.isBezeled = false
-        label.isEditable = false
-        return label
-    }
-
     private func updateMenuBarText() {
+        guard let button = statusItem.button else { return }
+
         let displayMode = UserDefaults.standard.string(forKey: "menuBarDisplay") ?? MenuBarDisplay.session.rawValue
         let showResetTime = UserDefaults.standard.object(forKey: "showResetTime") as? Bool ?? true
-
         let mode = MenuBarDisplay(rawValue: displayMode) ?? .session
 
         switch mode {
         case .session:
-            topLabel?.stringValue = ""
-            topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
             var line = ["5h: \(usageState.menuBarPercentage)"]
             if showResetTime { line.append("· \(usageState.menuBarResetTime)") }
-            bottomLabel?.stringValue = line.joined(separator: " ")
-            bottomLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
-            bottomLabel?.alignment = .center
-            bottomLabel?.frame = NSRect(x: 0, y: 2, width: statusItem.length, height: 18)
-            topLabel?.frame = NSRect(x: 0, y: 22, width: 0, height: 0)
+            button.attributedTitle = singleLineTitle(line.joined(separator: " "))
 
         case .weekly:
-            topLabel?.stringValue = ""
-            topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
             var line = ["7d: \(usageState.weeklyPercentage)"]
             if showResetTime { line.append("· \(usageState.weeklyResetTime)") }
-            bottomLabel?.stringValue = line.joined(separator: " ")
-            bottomLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
-            bottomLabel?.alignment = .center
-            bottomLabel?.frame = NSRect(x: 0, y: 2, width: statusItem.length, height: 18)
-            topLabel?.frame = NSRect(x: 0, y: 22, width: 0, height: 0)
+            button.attributedTitle = singleLineTitle(line.joined(separator: " "))
 
         case .both:
-            topLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
-            bottomLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
-            topLabel?.frame.origin.y = 10
-            bottomLabel?.frame.origin.y = -1
-
             var top = ["5h: \(usageState.menuBarPercentage)"]
             if showResetTime { top.append("· \(usageState.menuBarResetTime)") }
-            topLabel?.stringValue = top.joined(separator: " ")
-
             var bottom = ["7d: \(usageState.weeklyPercentage)"]
             if showResetTime { bottom.append("· \(usageState.weeklyResetTime)") }
-            bottomLabel?.stringValue = bottom.joined(separator: " ")
+            button.attributedTitle = twoLineTitle(
+                top.joined(separator: " "),
+                bottom.joined(separator: " ")
+            )
         }
+    }
 
-        let topWidth = topLabel?.attributedStringValue.size().width ?? 0
-        let bottomWidth = bottomLabel?.attributedStringValue.size().width ?? 0
-        let width = max(topWidth, bottomWidth) + 14
-        statusItem.length = max(width, 50)
-        let len = statusItem.length
-        topLabel?.frame.size.width = len
-        bottomLabel?.frame.size.width = len
-        statusItem.button?.subviews.first?.frame = NSRect(x: 0, y: 0, width: len, height: 22)
+    private func singleLineTitle(_ string: String) -> NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        return NSAttributedString(string: string, attributes: [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium),
+            .foregroundColor: NSColor.labelColor,
+            .paragraphStyle: paragraph,
+        ])
+    }
+
+    private func twoLineTitle(_ top: String, _ bottom: String) -> NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        paragraph.maximumLineHeight = 10
+        paragraph.minimumLineHeight = 10
+        return NSAttributedString(string: "\(top)\n\(bottom)", attributes: [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .medium),
+            .foregroundColor: NSColor.labelColor,
+            .paragraphStyle: paragraph,
+        ])
     }
 
     private func setupServices() {
