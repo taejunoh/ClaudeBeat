@@ -14,6 +14,9 @@ final class WebSession: NSObject, UsageTransport {
     /// with LoginWebView.
     static let dataStore: WKWebsiteDataStore = .default()
 
+    /// The app's single hidden web session, also used by the login window's probe.
+    @MainActor static let shared = WebSession()
+
     /// Holds one pending readiness continuation and guarantees it resumes exactly once.
     private final class ReadyBox {
         private var continuation: CheckedContinuation<Bool, Never>?
