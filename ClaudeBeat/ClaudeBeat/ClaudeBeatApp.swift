@@ -71,7 +71,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            self?.updateMenuBarText()
+            // Fires on the main runloop, so we are already on the main actor.
+            MainActor.assumeIsolated { self?.updateMenuBarText() }
         }
 
         // Watch for polling interval changes in UserDefaults
@@ -80,12 +81,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self, let service = self.usageService else { return }
-            let interval = UserDefaults.standard.double(forKey: "pollingInterval")
-            let newInterval = interval > 0 ? interval : 60
-            if service.pollingInterval != newInterval {
-                service.pollingInterval = newInterval
-                service.startPolling()
+            // Delivered on the .main queue, so assume main-actor isolation.
+            MainActor.assumeIsolated {
+                guard let self, let service = self.usageService else { return }
+                let interval = UserDefaults.standard.double(forKey: "pollingInterval")
+                let newInterval = interval > 0 ? interval : 60
+                if service.pollingInterval != newInterval {
+                    service.pollingInterval = newInterval
+                    service.startPolling()
+                }
             }
         }
 
