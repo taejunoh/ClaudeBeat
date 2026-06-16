@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 final class UsageService {
     private let transport: UsageTransport
@@ -23,12 +24,10 @@ final class UsageService {
             }
             let data = try await transport.fetchJSON(path: "/api/organizations/\(organizationId)/usage")
             let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: data)
-            await MainActor.run {
-                usageState.update(with: response)
-                notificationManager?.checkAndNotify(response: response)
-            }
+            usageState.update(with: response)
+            notificationManager?.checkAndNotify(response: response)
         } catch {
-            await handle(error)
+            handle(error)
         }
     }
 
@@ -39,28 +38,27 @@ final class UsageService {
         organizationId = first.uuid
     }
 
-    private func handle(_ error: Error) async {
-        await MainActor.run {
-            switch error {
-            case TransportError.needsLogin:
-                usageState.setNeedsLogin()
-            case TransportError.challenge:
-                usageState.setError("Connecting…")
-            case TransportError.network(let code):
-                usageState.setError("HTTP \(code)")
-            case TransportError.decode:
-                usageState.setError("Bad response")
-            case TransportError.webView(let message):
-                usageState.setError(message)
-            default:
-                usageState.setError(error.localizedDescription)
-            }
+    private func handle(_ error: Error) {
+        switch error {
+        case TransportError.needsLogin:
+            organizationId = ""
+            usageState.setNeedsLogin()
+        case TransportError.challenge:
+            usageState.setError("Connecting…")
+        case TransportError.network(let code):
+            usageState.setError("HTTP \(code)")
+        case TransportError.decode:
+            usageState.setError("Bad response")
+        case TransportError.webView(let message):
+            usageState.setError(message)
+        default:
+            usageState.setError(error.localizedDescription)
         }
     }
 
     func startPolling() {
         stopPolling()
-        pollingTask = Task { [weak self] in
+        pollingTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 await self?.fetchUsage()
                 guard let interval = self?.pollingInterval else { break }

@@ -46,6 +46,20 @@ final class UsageServiceTests: XCTestCase {
         XCTAssertTrue(state.needsLogin)
     }
 
+    func testFetchUsage_challenge_setsConnectingError() async {
+        let fake = FakeTransport()
+        fake.responses["/api/organizations"] = .failure(TransportError.challenge)
+
+        let state = UsageState()
+        let service = UsageService(transport: fake, usageState: state)
+
+        await service.fetchUsage()
+
+        XCTAssertTrue(state.isError)
+        XCTAssertFalse(state.needsLogin)
+        XCTAssertEqual(state.errorMessage, "Connecting…")
+    }
+
     func testFetchUsage_malformedJSON_setsError() async {
         let fake = FakeTransport()
         fake.responses["/api/organizations"] = .success(Data(orgsJSON.utf8))
