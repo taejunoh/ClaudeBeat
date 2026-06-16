@@ -3,23 +3,22 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Bindable var authManager: AuthManager
-    let onComplete: () -> Void
+    let onLogin: () -> Void               // opens the embedded login window
+    let onPaste: (String) async -> Bool   // injects sessionKey, returns logged-in
 
     @State private var sessionKey: String = ""
     @State private var isConnecting: Bool = false
-    @State private var showInstructions: Bool = false
+    @State private var showPaste: Bool = false
+    @State private var pasteFailed: Bool = false
 
     var body: some View {
         VStack(spacing: 20) {
-            // Header
             VStack(spacing: 8) {
                 Image(systemName: "chart.bar.fill")
                     .font(.system(size: 36))
                     .foregroundStyle(.blue)
-
                 Text("ClaudeBeat")
                     .font(.title2.bold())
-
                 Text("Monitor your Claude usage from the menu bar")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -27,38 +26,41 @@ struct OnboardingView: View {
 
             Divider()
 
-            // Session key input
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Paste your session key")
-                    .font(.headline)
+            Button {
+                onLogin()
+            } label: {
+                Text("Log in to Claude")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut(.defaultAction)
 
-                HStack {
-                    SecureField("sessionKey value", text: $sessionKey)
-                        .textFieldStyle(.roundedBorder)
-                        .disabled(isConnecting)
+            Button {
+                showPaste.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: showPaste ? "chevron.down" : "chevron.right")
+                        .font(.caption2)
+                    Text("Use a session key instead (Google sign-in)")
+                        .font(.caption)
+                }
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.blue)
 
-                    Button("Paste") {
-                        if let string = NSPasteboard.general.string(forType: .string) {
-                            sessionKey = string.trimmingCharacters(in: .whitespacesAndNewlines)
+            if showPaste {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        SecureField("sessionKey value", text: $sessionKey)
+                            .textFieldStyle(.roundedBorder)
+                            .disabled(isConnecting)
+                        Button("Paste") {
+                            if let string = NSPasteboard.general.string(forType: .string) {
+                                sessionKey = string.trimmingCharacters(in: .whitespacesAndNewlines)
+                            }
                         }
+                        .disabled(isConnecting)
                     }
-                    .disabled(isConnecting)
-                }
-
-                Button {
-                    showInstructions.toggle()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: showInstructions ? "chevron.down" : "chevron.right")
-                            .font(.caption2)
-                        Text("How to find your session key")
-                            .font(.caption)
-                    }
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.blue)
-
-                if showInstructions {
                     VStack(alignment: .leading, spacing: 4) {
                         instructionStep("1", "Open claude.ai in your browser and log in")
                         instructionStep("2", "Open DevTools (⌘⌥I) → Application tab")
@@ -67,35 +69,29 @@ struct OnboardingView: View {
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(8)
-                    .background(.quaternary.opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-            }
 
-            // Connection status
-            if case .error(let message) = authManager.connectionStatus {
-                Label(message, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
+                    if pasteFailed {
+                        Label("Couldn't connect with that key", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
 
-            // Connect button
-            Button {
-                connect()
-            } label: {
-                if isConnecting {
-                    ProgressView()
-                        .controlSize(.small)
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Text("Connect")
-                        .frame(maxWidth: .infinity)
+                    Button {
+                        connectWithPaste()
+                    } label: {
+                        if isConnecting {
+                            ProgressView().controlSize(.small).frame(maxWidth: .infinity)
+                        } else {
+                            Text("Connect").frame(maxWidth: .infinity)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(sessionKey.isEmpty || isConnecting)
                 }
+                .padding(8)
+                .background(.quaternary.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(sessionKey.isEmpty || isConnecting)
-            .keyboardShortcut(.defaultAction)
         }
         .padding(24)
         .frame(width: 360)
@@ -110,21 +106,14 @@ struct OnboardingView: View {
         }
     }
 
-    private func connect() {
+    private func connectWithPaste() {
         isConnecting = true
-        authManager.authMethod = .sessionCookie
+        pasteFailed = false
         authManager.sessionCookie = sessionKey
-
         Task { @MainActor in
-            do {
-                try await authManager.fetchOrganizationId()
-                if case .connected = authManager.connectionStatus {
-                    onComplete()
-                }
-            } catch {
-                print("Connection error: \(error)")
-            }
+            let ok = await onPaste(sessionKey)
             isConnecting = false
+            pasteFailed = !ok
         }
     }
 }

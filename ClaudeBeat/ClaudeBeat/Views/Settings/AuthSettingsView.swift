@@ -3,59 +3,40 @@ import SwiftUI
 
 struct AuthSettingsView: View {
     @Bindable var authManager: AuthManager
+    var onLogin: () -> Void = {}
+    var onLogout: () async -> Void = {}
+
+    @State private var sessionKey: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Auth Method", selection: $authManager.authMethod) {
-                ForEach(AuthMethod.allCases, id: \.self) { method in
-                    Text(method.rawValue).tag(method)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            switch authManager.authMethod {
-            case .oauth:
-                HStack {
-                    Text("OAuth Token")
-                    Spacer()
-                    if authManager.oauthToken.isEmpty {
-                        Text("Not found in Keychain")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Found")
-                            .foregroundStyle(.green)
-                    }
-                }
-                Button("Load from Keychain") {
-                    authManager.loadOAuthTokenFromKeychain()
-                }
-
-            case .sessionCookie:
-                HStack {
-                    SecureField("Session Key", text: $authManager.sessionCookie)
-                        .textFieldStyle(.roundedBorder)
-                    Button("Paste") {
-                        if let string = NSPasteboard.general.string(forType: .string) {
-                            authManager.sessionCookie = string.trimmingCharacters(in: .whitespacesAndNewlines)
-                        }
-                    }
-                }
-                Text("Paste sessionKey from a.claude.ai browser cookies")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            HStack {
+                connectionStatusView
+                Spacer()
+                Button("Log in to Claude", action: onLogin)
+                Button("Log out") { Task { await onLogout() } }
             }
 
             Divider()
 
+            Text("Session key (Google sign-in fallback)")
+                .font(.headline)
             HStack {
-                connectionStatusView
-                Spacer()
-                Button("Test Connection") {
-                    Task {
-                        try? await authManager.fetchOrganizationId()
+                SecureField("Session Key", text: $sessionKey)
+                    .textFieldStyle(.roundedBorder)
+                Button("Paste") {
+                    if let string = NSPasteboard.general.string(forType: .string) {
+                        sessionKey = string.trimmingCharacters(in: .whitespacesAndNewlines)
                     }
                 }
+                Button("Save") {
+                    authManager.sessionCookie = sessionKey
+                }
+                .disabled(sessionKey.isEmpty)
             }
+            Text("Paste sessionKey from a.claude.ai browser cookies, then Save.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .padding()
     }
@@ -64,7 +45,7 @@ struct AuthSettingsView: View {
     private var connectionStatusView: some View {
         switch authManager.connectionStatus {
         case .unknown:
-            Label("Not tested", systemImage: "circle")
+            Label("Not connected", systemImage: "circle")
                 .foregroundStyle(.secondary)
         case .connected:
             Label("Connected", systemImage: "circle.fill")

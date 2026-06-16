@@ -28,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var pollingObserver: NSObjectProtocol?
     private var onboardingWindow: NSWindow?
     private var settingsWindow: NSWindow?
+    private var loginWindowController: LoginWindowController?
     private var eventMonitor: Any?
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -112,6 +113,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func togglePopover() {
         guard let button = statusItem.button else { return }
+        if usageState.needsLogin {
+            openLogin()
+            return
+        }
         if popover.isShown {
             closePopover()
         } else {
@@ -133,6 +138,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateMenuBarText() {
         guard let button = statusItem.button else { return }
+
+        if usageState.needsLogin {
+            button.attributedTitle = singleLineTitle("Log in")
+            return
+        }
 
         let displayMode = UserDefaults.standard.string(forKey: "menuBarDisplay") ?? MenuBarDisplay.session.rawValue
         let showResetTime = UserDefaults.standard.object(forKey: "showResetTime") as? Bool ?? true
@@ -211,19 +221,39 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func openOnboarding() {
-        let onboardingView = OnboardingView(authManager: authManager) { [weak self] in
-            self?.onboardingWindow?.close()
-            self?.onboardingWindow = nil
-            Task { [weak self] in
-                if self?.authManager.organizationId.isEmpty == true {
-                    try? await self?.authManager.fetchOrganizationId()
-                }
+    func openLogin() {
+        let controller = loginWindowController ?? LoginWindowController(onLoggedIn: { [weak self] in
+            guard let self else { return }
+            self.onboardingWindow?.close()
+            self.onboardingWindow = nil
+            Task { @MainActor [weak self] in
                 await self?.usageService?.fetchUsage()
-                await MainActor.run { self?.updateMenuBarText() }
+                self?.updateMenuBarText()
                 self?.usageService?.startPolling()
             }
-        }
+        })
+        loginWindowController = controller
+        controller.show()
+    }
+
+    private func openOnboarding() {
+        let onboardingView = OnboardingView(
+            authManager: authManager,
+            onLogin: { [weak self] in self?.openLogin() },
+            onPaste: { [weak self] key in
+                guard let self else { return false }
+                await WebSession.shared.injectSessionCookie(key)
+                let ok = await WebSession.shared.probeLoggedIn()
+                if ok {
+                    self.onboardingWindow?.close()
+                    self.onboardingWindow = nil
+                    await self.usageService?.fetchUsage()
+                    self.updateMenuBarText()
+                    self.usageService?.startPolling()
+                }
+                return ok
+            }
+        )
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 360, height: 400),
