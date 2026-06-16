@@ -34,6 +34,14 @@ jobs:
           sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1 || echo /Applications/Xcode.app)"
           xcodebuild -version
 
+      - name: Generate Xcode project
+        # Regenerate the .xcodeproj from project.yml so newly added source files are
+        # always included in the build (the committed .xcodeproj can drift / go stale).
+        run: |
+          brew install xcodegen
+          cd "$PROJECT_DIR"
+          xcodegen generate
+
       - name: Import signing certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
