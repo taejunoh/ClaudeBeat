@@ -134,9 +134,10 @@ The `WKWebView` transport, Cloudflare pass, and login can't be unit-tested (need
 
 ## Known follow-ups (deferred from the WKWebView milestone)
 
-- **Settings → Auth tab is partially wired.** `AuthSettingsView`'s "Log in" / "Log out" buttons take optional `onLogin`/`onLogout` closures that default to no-ops, and `SettingsView` passes none — so those buttons currently do nothing. "Save" persists the key to the Keychain but does not inject it into the *running* `WebSession` (takes effect on next launch). Wire these through `AppDelegate` (it has `openLogin()` and `WebSession.shared.clearData()`).
-- **`AuthManager.connectionStatus` is vestigial** — nothing sets it to `.connected`/`.error` anymore (the old `fetchOrganizationId` did), so the Settings status indicator always shows "Not connected". Either drive it from `WebSession.probeLoggedIn()` or remove it together with `AuthSettingsView.connectionStatusView`.
 - **Cold-start double-fetch of `/api/organizations`** — `setupServices` probes login via `/api/organizations`, then `UsageService` resolves the org id with a second identical request. Minor extra round-trip; could be collapsed by having the probe seed the service.
+- **`logOut()` does not `stopPolling()`** — after logout the poll loop keeps running and re-sets `needsLogin` each cycle (harmless/self-healing; intentionally left so a later Settings "Save" picks up the new key without needing to restart polling).
+
+(Resolved in-milestone: the Settings → Auth tab is now fully wired — status is derived live from `UsageState` ("Connected"/"Login required"/"Connecting…"), and Log in / Log out / Save all route through `AppDelegate`. The vestigial `AuthManager.connectionStatus` was removed.)
 
 ## What's Next
 
