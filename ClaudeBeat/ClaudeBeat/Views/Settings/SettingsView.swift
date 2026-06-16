@@ -19,6 +19,10 @@ enum SettingsTab: String, CaseIterable {
 struct SettingsView: View {
     let authManager: AuthManager
     let notificationManager: NotificationManager
+    var usageState: UsageState
+    var onLogin: () -> Void = {}
+    var onLogout: () async -> Void = {}
+    var onSaveKey: (String) async -> Void = { _ in }
 
     @State private var selectedTab: SettingsTab = .auth
 
@@ -52,7 +56,13 @@ struct SettingsView: View {
             Group {
                 switch selectedTab {
                 case .auth:
-                    AuthSettingsView(authManager: authManager)
+                    AuthSettingsView(
+                        authManager: authManager,
+                        usageState: usageState,
+                        onLogin: onLogin,
+                        onLogout: onLogout,
+                        onSaveKey: onSaveKey
+                    )
                 case .display:
                     DisplaySettingsView()
                 case .alerts:

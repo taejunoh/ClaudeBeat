@@ -9,7 +9,11 @@ struct ClaudeTokenUsageApp: App {
         Settings {
             SettingsView(
                 authManager: appDelegate.authManager,
-                notificationManager: appDelegate.notificationManager
+                notificationManager: appDelegate.notificationManager,
+                usageState: appDelegate.usageState,
+                onLogin: { appDelegate.openLogin() },
+                onLogout: { await appDelegate.logOut() },
+                onSaveKey: { key in await appDelegate.saveSessionKey(key) }
             )
         }
     }
@@ -230,6 +234,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         usageService?.startPolling()
     }
 
+    /// Settings "Log out": clear the web session + stored key, drop to the login-required state.
+    func logOut() async {
+        await WebSession.shared.clearData()
+        authManager.sessionCookie = ""
+        usageState.setNeedsLogin()
+        updateMenuBarText()
+    }
+
+    /// Settings "Save" for the pasted sessionKey fallback: inject, verify, persist only on success.
+    func saveSessionKey(_ key: String) async {
+        await WebSession.shared.injectSessionCookie(key)
+        if await WebSession.shared.probeLoggedIn() {
+            authManager.sessionCookie = key
+            await usageService?.fetchUsage()
+        } else {
+            usageState.setNeedsLogin()
+        }
+        updateMenuBarText()
+    }
+
     func openLogin() {
         let controller = loginWindowController ?? LoginWindowController(onLoggedIn: { [weak self] in
             // Close onboarding (if open) — nil-safe when openLogin was triggered from the menu bar directly.
@@ -276,7 +300,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let settingsView = SettingsView(
             authManager: authManager,
-            notificationManager: notificationManager
+            notificationManager: notificationManager,
+            usageState: usageState,
+            onLogin: { [weak self] in self?.openLogin() },
+            onLogout: { [weak self] in await self?.logOut() },
+            onSaveKey: { [weak self] key in await self?.saveSessionKey(key) }
         )
 
         let window = NSWindow(

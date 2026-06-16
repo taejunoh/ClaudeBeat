@@ -3,15 +3,17 @@ import SwiftUI
 
 struct AuthSettingsView: View {
     @Bindable var authManager: AuthManager
+    var usageState: UsageState
     var onLogin: () -> Void = {}
     var onLogout: () async -> Void = {}
+    var onSaveKey: (String) async -> Void = { _ in }
 
     @State private var sessionKey: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                connectionStatusView
+                statusView
                 Spacer()
                 Button("Log in to Claude", action: onLogin)
                 Button("Log out") { Task { await onLogout() } }
@@ -29,30 +31,31 @@ struct AuthSettingsView: View {
                         sessionKey = string.trimmingCharacters(in: .whitespacesAndNewlines)
                     }
                 }
-                Button("Save") {
-                    authManager.sessionCookie = sessionKey
-                }
-                .disabled(sessionKey.isEmpty)
+                Button("Save") { Task { await onSaveKey(sessionKey) } }
+                    .disabled(sessionKey.isEmpty)
             }
-            Text("Paste sessionKey from a.claude.ai browser cookies, then Save.")
+            Text("Only needed if you sign in to Claude with Google. Paste sessionKey from a.claude.ai browser cookies, then Save.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .padding()
+        .onAppear { sessionKey = authManager.sessionCookie }
     }
 
     @ViewBuilder
-    private var connectionStatusView: some View {
-        switch authManager.connectionStatus {
-        case .unknown:
-            Label("Not connected", systemImage: "circle")
-                .foregroundStyle(.secondary)
-        case .connected:
+    private var statusView: some View {
+        if usageState.needsLogin {
+            Label("Login required", systemImage: "circle.fill")
+                .foregroundStyle(.red)
+        } else if usageState.response != nil {
             Label("Connected", systemImage: "circle.fill")
                 .foregroundStyle(.green)
-        case .error(let message):
-            Label(message, systemImage: "circle.fill")
-                .foregroundStyle(.red)
+        } else if usageState.isError {
+            Label(usageState.errorMessage ?? "Error", systemImage: "circle.fill")
+                .foregroundStyle(.orange)
+        } else {
+            Label("Connecting…", systemImage: "circle")
+                .foregroundStyle(.secondary)
         }
     }
 }

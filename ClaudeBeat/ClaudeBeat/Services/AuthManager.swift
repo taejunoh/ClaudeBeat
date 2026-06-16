@@ -11,12 +11,6 @@ final class AuthManager {
         didSet { saveSessionCookieToKeychain(sessionCookie) }
     }
 
-    var connectionStatus: ConnectionStatus = .unknown
-
-    enum ConnectionStatus: Equatable {
-        case unknown, connected, error(String)
-    }
-
     init() {
         self.sessionCookie = Self.loadCookieFromKeychain() ?? ""
     }
