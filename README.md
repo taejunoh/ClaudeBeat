@@ -44,7 +44,7 @@
 - **Threshold alerts** — macOS notifications when usage hits your configured threshold
   - Session (5h) and Weekly (7d): percentage slider (0–100%)
   - Extra Usage: dollar amount input ($)
-- **Secure credential storage** — Session cookie stored in macOS Keychain, not plaintext
+- **In-app sign-in** — Log in to Claude in a built-in window; the session is stored in the macOS Keychain, never plaintext (session-key paste available as a Google sign-in fallback)
 - **Auto-refresh** — Polls every 60 seconds (configurable 15s-5min)
 - **Launch at login** — Optional auto-start
 
@@ -62,26 +62,23 @@ Download from [GitHub Releases](https://github.com/taejunoh/ClaudeBeat/releases/
 
 ## Getting Started
 
-### Quick Start
+On first launch, an onboarding window appears with two ways to connect.
 
-On first launch, an onboarding window will appear. You'll need your session key from claude.ai:
+### Log in to Claude (recommended)
+
+Click **Log in to Claude** and sign in to claude.ai in the window that opens. That's it — your session is stored securely and persists across restarts, with no cookie-copying.
+
+> **Signing in with Google?** Google blocks its sign-in inside embedded windows, so use the session-key method below instead.
+
+### Session key (Google sign-in fallback)
 
 1. Open [claude.ai](https://claude.ai) in your browser and log in
 2. Open DevTools (`Cmd+Opt+I`) → **Application** tab
 3. Sidebar → **Cookies** → `https://a.claude.ai`
 4. Find `sessionKey` and copy its value
-5. Click **Paste** in the app, then **Connect**
+5. In onboarding (or **Settings → Auth**), expand the session-key section, click **Paste**, then **Connect** / **Save**
 
-Your session key is securely stored in the macOS Keychain and persists across app restarts.
-
-### Alternative: Claude Code OAuth
-
-If you use [Claude Code](https://docs.anthropic.com/en/docs/claude-code), you can authenticate via OAuth instead:
-
-1. Open Settings → Auth tab
-2. Select "OAuth (Claude Code)"
-3. Click "Load from Keychain"
-4. Click "Test Connection"
+Your session key is stored in the macOS Keychain and persists across app restarts.
 
 ## Menu Bar Display
 
@@ -97,12 +94,19 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 | Tab | Options |
 |---|---|
-| **Auth** | Switch between OAuth (Claude Code) and Session Cookie, test connection |
+| **Auth** | Connection status, **Log in** / **Log out**, and an optional session-key field for the Google sign-in fallback |
 | **Display** | Menu bar mode (Session / Weekly / Both), toggle reset time visibility |
 | **Alerts** | Session reset notification, threshold alerts — Session (5h) & Weekly (7d) as % slider (0–100%), Extra Usage as $ amount |
 | **General** | Polling interval (15s-5min), launch at login, version info |
 
 ## What's New
+
+### v1.0.5
+- **Fixes "no numbers" on macOS 26 (Tahoe)** — menu bar text now renders via the button's title, compatible with the Liquid Glass menu bar
+- **Works past claude.ai's Cloudflare check** — usage is fetched through a hidden WebKit view that passes the bot challenge (plain requests now get HTTP 403)
+- **In-app "Log in to Claude"** — sign in directly, no more copying cookies (session-key paste kept as a Google sign-in fallback)
+- Settings → Auth shows live connection status with Log in / Log out
+- Removed the (non-functional) Claude Code OAuth option
 
 ### v1.0.0
 - Real-time 5h session and 7d weekly usage display in menu bar
@@ -119,17 +123,14 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 ## Troubleshooting
 
-### "Failed to fetch organizations" or HTTP 403
-Your session key has expired. Get a fresh one from the browser:
-1. Go to [claude.ai](https://claude.ai) → DevTools → Application → Cookies → `https://a.claude.ai`
-2. Copy the new `sessionKey` value
-3. Open Settings → Auth → Paste the new key → Test Connection
+### Menu bar shows "Log in" / usage stopped updating
+Your claude.ai session expired or you were signed out. Click the **Log in** menu bar item (or **Settings → Auth → Log in to Claude**) and sign in again. If you use Google sign-in, paste a fresh `sessionKey` in Settings → Auth instead.
 
 ### Menu bar text not showing
 If you only see a blank space in the menu bar:
-- Wait a few seconds — the first data fetch takes a moment
-- Click the menu bar item to check if the popover shows data
-- Verify your connection in Settings → Auth → Test Connection
+- Wait a few seconds — on first launch the app loads claude.ai and the first data fetch takes a moment
+- Click the menu bar item — if it says "Log in", sign in via the window that opens
+- Make sure you're on the latest release (older builds don't render on macOS 26 Tahoe)
 
 ### Notifications not working
 - Make sure you're running the `.app` bundle (not `swift run`) — notifications require a proper app bundle
@@ -145,9 +146,8 @@ The API returns values in cents. The app converts to dollars (e.g., 2629 cents �
 
 ## Security
 
-- Session cookie is stored in macOS Keychain (not plaintext UserDefaults)
-- Automatic migration from older plaintext storage on first launch
-- OAuth tokens read from Claude Code's Keychain entry (read-only)
+- Sign-in happens in a sandboxed WebKit view talking directly to claude.ai; cookies live in the app's own website data store
+- The optional session key (Google fallback) is stored in the macOS Keychain, not plaintext
 - No data is sent to any third-party server
 
 ## Tech Stack
