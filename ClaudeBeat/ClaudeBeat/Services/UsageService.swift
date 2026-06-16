@@ -2,67 +2,59 @@ import Foundation
 
 @Observable
 final class UsageService {
-    private let authManager: AuthManager
+    private let transport: UsageTransport
     private let usageState: UsageState
     private let notificationManager: NotificationManager?
     private var pollingTask: Task<Void, Never>?
 
     var pollingInterval: TimeInterval = 60
+    private var organizationId: String = ""
 
-    init(authManager: AuthManager, usageState: UsageState, notificationManager: NotificationManager? = nil) {
-        self.authManager = authManager
+    init(transport: UsageTransport, usageState: UsageState, notificationManager: NotificationManager? = nil) {
+        self.transport = transport
         self.usageState = usageState
         self.notificationManager = notificationManager
     }
 
     func fetchUsage() async {
-        guard authManager.isConfigured, !authManager.organizationId.isEmpty else {
-            await MainActor.run { usageState.setError("Not authenticated") }
-            return
-        }
-
-        let urlString = "https://claude.ai/api/organizations/\(authManager.organizationId)/usage"
-        guard let url = URL(string: urlString) else {
-            await MainActor.run { usageState.setError("Invalid URL") }
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        for (key, value) in authManager.buildHeaders() {
-            request.setValue(value, forHTTPHeaderField: key)
-        }
-
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-                await MainActor.run { usageState.setError("HTTP \(code)") }
-                return
+            if organizationId.isEmpty {
+                try await resolveOrganizationId()
             }
-
-            let decoder = JSONDecoder()
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            let fallbackFormatter = ISO8601DateFormatter()
-            fallbackFormatter.formatOptions = [.withInternetDateTime]
-            decoder.dateDecodingStrategy = .custom { decoder in
-                let container = try decoder.singleValueContainer()
-                let dateString = try container.decode(String.self)
-                if let date = formatter.date(from: dateString) { return date }
-                if let date = fallbackFormatter.date(from: dateString) { return date }
-                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date: \(dateString)")
-            }
-
-            let usageResponse = try decoder.decode(UsageResponse.self, from: data)
+            let data = try await transport.fetchJSON(path: "/api/organizations/\(organizationId)/usage")
+            let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: data)
             await MainActor.run {
-                usageState.update(with: usageResponse)
-                notificationManager?.checkAndNotify(response: usageResponse)
+                usageState.update(with: response)
+                notificationManager?.checkAndNotify(response: response)
             }
         } catch {
-            await MainActor.run { usageState.setError(error.localizedDescription) }
+            await handle(error)
+        }
+    }
+
+    private func resolveOrganizationId() async throws {
+        let data = try await transport.fetchJSON(path: "/api/organizations")
+        let orgs = try JSONDecoder.makeAPIDecoder().decode([Organization].self, from: data)
+        guard let first = orgs.first else { throw TransportError.decode }
+        organizationId = first.uuid
+    }
+
+    private func handle(_ error: Error) async {
+        await MainActor.run {
+            switch error {
+            case TransportError.needsLogin:
+                usageState.setNeedsLogin()
+            case TransportError.challenge:
+                usageState.setError("Connecting…")
+            case TransportError.network(let code):
+                usageState.setError("HTTP \(code)")
+            case TransportError.decode:
+                usageState.setError("Bad response")
+            case TransportError.webView(let message):
+                usageState.setError(message)
+            default:
+                usageState.setError(error.localizedDescription)
+            }
         }
     }
 

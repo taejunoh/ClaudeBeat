@@ -180,13 +180,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupServices() {
-        if authManager.authMethod == .oauth {
-            authManager.loadOAuthTokenFromKeychain()
-        }
         notificationManager.requestPermission()
 
         let service = UsageService(
-            authManager: authManager,
+            transport: WebSession.shared,
             usageState: usageState,
             notificationManager: notificationManager
         )
@@ -194,16 +191,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         service.pollingInterval = interval > 0 ? interval : 60
         usageService = service
 
-        if authManager.isConfigured {
-            Task { [weak self] in
-                try? await self?.authManager.fetchOrganizationId()
-                await self?.usageService?.fetchUsage()
-                await MainActor.run { self?.updateMenuBarText() }
-                self?.usageService?.startPolling()
+        Task { [weak self] in
+            guard let self else { return }
+            // Re-inject a previously pasted sessionKey (if any) before probing.
+            if !self.authManager.sessionCookie.isEmpty {
+                await WebSession.shared.injectSessionCookie(self.authManager.sessionCookie)
             }
-        } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.openOnboarding()
+            if await WebSession.shared.probeLoggedIn() {
+                await self.usageService?.fetchUsage()
+                await MainActor.run { self.updateMenuBarText() }
+                self.usageService?.startPolling()
+            } else {
+                await MainActor.run { self.openOnboarding() }
             }
         }
     }
