@@ -26,9 +26,9 @@
 
 ## Screenshots
 
-| Menu Bar | Popover Dashboard | Settings |
-|---|---|---|
-| ![Menu Bar](assets/menubar.png) | ![Popover](assets/popover.png) | ![Settings](assets/settings.png) |
+| Menu Bar | Popover Dashboard | Settings | Auth |
+|---|---|---|---|
+| ![Menu Bar](assets/menubar.png) | ![Popover](assets/popover.png) | ![Settings](assets/settings.png) | ![Auth](assets/auth.png) |
 
 ![Notification](assets/alert.png)
 
