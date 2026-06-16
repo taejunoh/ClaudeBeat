@@ -3,10 +3,17 @@ import XCTest
 
 final class AuthManagerTests: XCTestCase {
 
-    func testSessionCookieRoundTrips() {
-        let auth = AuthManager()
-        auth.sessionCookie = "sk-ant-abc123"
-        XCTAssertEqual(auth.sessionCookie, "sk-ant-abc123")
+    override func tearDown() {
+        // Clear the shared Keychain item so tests don't pollute each other or the real app.
+        AuthManager().sessionCookie = ""
+        super.tearDown()
+    }
+
+    func testSessionCookiePersistsToKeychain() {
+        AuthManager().sessionCookie = "sk-ant-abc123"
+        // A fresh instance must load the persisted value back from the Keychain.
+        let reloaded = AuthManager()
+        XCTAssertEqual(reloaded.sessionCookie, "sk-ant-abc123")
     }
 
     func testIsConfigured_followsSessionCookie() {

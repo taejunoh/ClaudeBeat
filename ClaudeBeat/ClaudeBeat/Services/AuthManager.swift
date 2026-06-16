@@ -3,7 +3,6 @@ import Security
 
 @Observable
 final class AuthManager {
-    private static let defaults = UserDefaults(suiteName: "com.claudebeat.macos") ?? .standard
     private static let keychainService = "com.claudetokenusage.sessionkey"
 
     /// Pasted sessionKey (Google-SSO fallback). Persisted to the Keychain and re-injected
