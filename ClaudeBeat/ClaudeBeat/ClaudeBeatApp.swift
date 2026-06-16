@@ -221,16 +221,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Shared post-login sequence: dismiss onboarding (if open), refresh, and start polling.
+    private func handleLoginSuccess() async {
+        onboardingWindow?.close()
+        onboardingWindow = nil
+        await usageService?.fetchUsage()
+        updateMenuBarText()
+        usageService?.startPolling()
+    }
+
     func openLogin() {
         let controller = loginWindowController ?? LoginWindowController(onLoggedIn: { [weak self] in
-            guard let self else { return }
-            self.onboardingWindow?.close()
-            self.onboardingWindow = nil
-            Task { @MainActor [weak self] in
-                await self?.usageService?.fetchUsage()
-                self?.updateMenuBarText()
-                self?.usageService?.startPolling()
-            }
+            // Close onboarding (if open) — nil-safe when openLogin was triggered from the menu bar directly.
+            Task { @MainActor [weak self] in await self?.handleLoginSuccess() }
         })
         loginWindowController = controller
         controller.show()
@@ -244,13 +247,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return false }
                 await WebSession.shared.injectSessionCookie(key)
                 let ok = await WebSession.shared.probeLoggedIn()
-                if ok {
-                    self.onboardingWindow?.close()
-                    self.onboardingWindow = nil
-                    await self.usageService?.fetchUsage()
-                    self.updateMenuBarText()
-                    self.usageService?.startPolling()
-                }
+                if ok { await self.handleLoginSuccess() }
                 return ok
             }
         )

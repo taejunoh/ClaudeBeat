@@ -109,9 +109,9 @@ struct OnboardingView: View {
     private func connectWithPaste() {
         isConnecting = true
         pasteFailed = false
-        authManager.sessionCookie = sessionKey
         Task { @MainActor in
             let ok = await onPaste(sessionKey)
+            if ok { authManager.sessionCookie = sessionKey }
             isConnecting = false
             pasteFailed = !ok
         }
