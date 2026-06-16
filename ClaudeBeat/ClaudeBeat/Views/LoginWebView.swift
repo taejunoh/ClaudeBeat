@@ -26,6 +26,9 @@ final class LoginWindowController: NSObject, NSWindowDelegate {
             return
         }
 
+        // Fresh login session: clear the once-flag that windowWillClose latched on a prior close.
+        loginDidSucceed = false
+
         let config = WKWebViewConfiguration()
         config.websiteDataStore = WebSession.dataStore   // shared store
         let webView = WKWebView(
