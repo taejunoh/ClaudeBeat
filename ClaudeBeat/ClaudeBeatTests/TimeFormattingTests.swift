@@ -10,7 +10,9 @@ final class TimeFormattingTests: XCTestCase {
     }
 
     func testMenuBarFormat_minutes() {
-        let future = Date().addingTimeInterval(45 * 60)
+        // +30s buffer so the floored minute count stays 45 for the test's duration
+        // (menuBarString floors via Int(seconds/60); an exact 45*60 flakes to "44m").
+        let future = Date().addingTimeInterval(45 * 60 + 30)
         let result = TimeFormatting.menuBarString(until: future)
         XCTAssertEqual(result, "45m")
     }
