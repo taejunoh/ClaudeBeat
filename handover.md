@@ -17,9 +17,10 @@ A native macOS menu bar app (Swift + SwiftUI) that monitors Claude AI token usag
 - Quit button in popover, app doesn't quit when closing Settings
 - Popover closes on click outside
 
-**Auth methods:**
-- Session cookie (paste `sessionKey` from `a.claude.ai` browser cookies) — primary
-- OAuth (Claude Code CLI Keychain) — secondary, not tested
+**Auth (hybrid — a single web-session model):**
+- **Embedded login (primary):** "Log in to Claude" opens an in-app `WKWebView` login window (`LoginWindowController`) sharing `WebSession.dataStore`. Works for email + code login.
+- **Session-key paste (fallback):** for Google-SSO accounts (Google blocks sign-in inside embedded WebViews). The pasted `sessionKey` is injected into the shared `WKHTTPCookieStore` and persisted to the Keychain for re-injection on launch.
+- OAuth was **removed** — it hit the same Cloudflare-gated `claude.ai/api` endpoints and could never work.
 
 ## Architecture
 
@@ -28,6 +29,8 @@ A native macOS menu bar app (Swift + SwiftUI) that monitors Claude AI token usag
 - SwiftUI views hosted inside `NSHostingController` for the popover and settings
 - `@Observable` pattern for state management (`UsageState`, `AuthManager`, `NotificationManager`)
 - 2-second timer refreshes menu bar text from `UsageState`
+- **Data transport via a hidden `WKWebView`** (`WebSession`, conforms to `UsageTransport`) — `claude.ai/api` now sits behind a Cloudflare *managed challenge* that blocks plain `URLSession` (HTTP 403). A real WebKit engine passes the challenge and carries `cf_clearance` + session cookies; `WebSession` issues an in-page `fetch()` via `callAsyncJavaScript`. `UsageService` (now `@MainActor`) depends on the `UsageTransport` protocol — production = `WebSession.shared`, tests = `FakeTransport`.
+- **Menu bar uses `statusItem.button.attributedTitle`** (NOT custom `NSView` subviews, which stopped rendering on macOS 26 Tahoe's Liquid Glass menu bar). `UsageState.needsLogin` drives a "Log in" menu-bar state whose click opens the login window.
 
 ## Key Files
 
@@ -38,8 +41,10 @@ ClaudeBeat/
 │   ├── UsageResponse.swift            # API response Codable models + JSONDecoder extension
 │   └── UsageState.swift               # @Observable state with computed menu bar text
 ├── Services/
-│   ├── AuthManager.swift              # OAuth + session cookie, UserDefaults persistence
-│   ├── UsageService.swift             # API polling loop
+│   ├── UsageTransport.swift           # Transport protocol + TransportError + response classifier
+│   ├── WebSession.swift               # Hidden WKWebView transport (passes Cloudflare); cookie injection + login probe
+│   ├── AuthManager.swift              # Thin sessionKey (Keychain) holder + connection status
+│   ├── UsageService.swift             # @MainActor polling loop over UsageTransport
 │   └── NotificationManager.swift      # Threshold logic + UNUserNotification
 ├── Views/
 │   ├── PopoverView.swift              # Main popover container
@@ -47,7 +52,8 @@ ClaudeBeat/
 │   ├── WeeklyUsageView.swift          # Side-by-side All Models + Sonnet gauges
 │   ├── ExtraUsageView.swift           # Credits progress bar (values in cents, displayed as dollars)
 │   ├── StatusBarView.swift            # TopBarView (updated/refresh) + BottomBarView (settings/quit)
-│   ├── OnboardingView.swift           # First-launch session key setup
+│   ├── OnboardingView.swift           # First-launch hybrid auth (embedded login + sessionKey fallback)
+│   ├── LoginWebView.swift             # Embedded claude.ai login window (LoginWindowController)
 │   └── Settings/
 │       ├── SettingsView.swift         # Left sidebar tab navigation
 │       ├── AuthSettingsView.swift
@@ -103,7 +109,7 @@ cd ClaudeBeat && xcodegen generate
 - `UNUserNotificationCenter.current()` crashes in SPM builds (no bundle identifier) — guarded with `Bundle.main.bundleIdentifier != nil` check
 - `UserDefaults.standard` writes to unpredictable domain in SPM builds — using named suite `com.claudebeat.macos`
 - Paste (⌘V) doesn't work in text fields in SPM builds — added explicit "Paste" buttons
-- `a.claude.ai` API calls hit Cloudflare challenge — must use `claude.ai` with `Accept: application/json` header
+- **`claude.ai/api` now returns a Cloudflare *managed challenge* (HTTP 403, `cf-mitigated: challenge`, "Just a moment…" HTML) to plain HTTP clients** — regardless of cookie validity or User-Agent. All data fetches go through `WebSession`'s hidden `WKWebView`. **Do NOT reintroduce `URLSession` requests to `claude.ai/api`** — they will 403.
 
 ## Code Signing & Notarization
 
@@ -113,6 +119,24 @@ cd ClaudeBeat && xcodegen generate
 - **Hardened Runtime:** Enabled + Secure Timestamp
 - **notarytool profile:** `notary-profile` (stored in Keychain via `xcrun notarytool store-credentials`)
 - **AppIcon.icns:** Manually generated via `iconutil` (10 sizes, 16–1024px) in `Resources/` — the asset catalog compiler only generates a partial icns, which caused notification icons not to display
+
+## Manual QA — WKWebView fetch (not covered by unit tests)
+
+The `WKWebView` transport, Cloudflare pass, and login can't be unit-tested (need a real engine + network + account). After building the `.app`, walk:
+
+- [ ] Cold launch with no stored login → onboarding window appears.
+- [ ] "Log in to Claude" opens the login window; after email+code login it closes and real percentages appear within ~60s.
+- [ ] Google-SSO account: the login window is blocked by Google → use "Use a session key instead", paste `sessionKey`, Connect → percentages appear.
+- [ ] Quit and relaunch → still logged in (persistent `WKWebsiteDataStore`), no re-login needed.
+- [ ] Cold launch shows numbers within a few seconds (Cloudflare challenge passes on first load).
+- [ ] Force logout (revoke the session in a browser) → menu bar shows "Log in"; clicking it opens the login window; logging back in restores numbers.
+- [ ] Toggle network off briefly → last value retained, recovers on the next poll.
+
+## Known follow-ups (deferred from the WKWebView milestone)
+
+- **Settings → Auth tab is partially wired.** `AuthSettingsView`'s "Log in" / "Log out" buttons take optional `onLogin`/`onLogout` closures that default to no-ops, and `SettingsView` passes none — so those buttons currently do nothing. "Save" persists the key to the Keychain but does not inject it into the *running* `WebSession` (takes effect on next launch). Wire these through `AppDelegate` (it has `openLogin()` and `WebSession.shared.clearData()`).
+- **`AuthManager.connectionStatus` is vestigial** — nothing sets it to `.connected`/`.error` anymore (the old `fetchOrganizationId` did), so the Settings status indicator always shows "Not connected". Either drive it from `WebSession.probeLoggedIn()` or remove it together with `AuthSettingsView.connectionStatusView`.
+- **Cold-start double-fetch of `/api/organizations`** — `setupServices` probes login via `/api/organizations`, then `UsageService` resolves the org id with a second identical request. Minor extra round-trip; could be collapsed by having the probe seed the service.
 
 ## What's Next
 
