@@ -2,7 +2,7 @@ import AppKit
 import WebKit
 
 /// A visible window that loads claude.ai's login page in a WKWebView sharing WebSession's
-/// persistent store. When the user becomes logged in, `onLoggedIn` fires and the window closes.
+/// persistent store. When the user becomes logged in, `onLoggedIn` fires once and the window closes.
 @MainActor
 final class LoginWindowController: NSObject, NSWindowDelegate {
 
@@ -10,6 +10,9 @@ final class LoginWindowController: NSObject, NSWindowDelegate {
     private var webView: WKWebView?
     private let onLoggedIn: () -> Void
     private var probeTask: Task<Void, Never>?
+    /// Once-flag: ensures `onLoggedIn` fires at most once and suppresses any in-flight probe
+    /// completion after the window has closed.
+    private var loginDidSucceed = false
 
     init(onLoggedIn: @escaping () -> Void) {
         self.onLoggedIn = onLoggedIn
@@ -50,6 +53,8 @@ final class LoginWindowController: NSObject, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
+        // Suppress any in-flight probe completion: a manual close cancels the flow.
+        loginDidSucceed = true
         probeTask?.cancel()
         probeTask = nil
         window = nil
@@ -65,9 +70,11 @@ extension LoginWindowController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // After each navigation, probe whether the user is now logged in.
         probeTask?.cancel()
-        probeTask = Task { @MainActor in
-            let session = WebSession.shared
-            if await session.probeLoggedIn() {
+        probeTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            if await WebSession.shared.probeLoggedIn() {
+                guard !self.loginDidSucceed else { return }
+                self.loginDidSucceed = true
                 self.onLoggedIn()
                 self.close()
             }
