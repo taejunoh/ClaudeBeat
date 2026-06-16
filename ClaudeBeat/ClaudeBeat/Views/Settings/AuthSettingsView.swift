@@ -15,8 +15,12 @@ struct AuthSettingsView: View {
             HStack {
                 statusView
                 Spacer()
-                Button("Log in to Claude", action: onLogin)
-                Button("Log out") { Task { await onLogout() } }
+                // Show only the action that applies: log out when connected, log in otherwise.
+                if isConnected {
+                    Button("Log out") { Task { await onLogout() } }
+                } else {
+                    Button("Log in to Claude", action: onLogin)
+                }
             }
 
             Divider()
@@ -40,6 +44,11 @@ struct AuthSettingsView: View {
         }
         .padding()
         .onAppear { sessionKey = authManager.sessionCookie }
+    }
+
+    /// Logged in with data flowing.
+    private var isConnected: Bool {
+        !usageState.needsLogin && usageState.response != nil
     }
 
     @ViewBuilder
