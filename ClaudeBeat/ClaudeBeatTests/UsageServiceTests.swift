@@ -73,4 +73,37 @@ final class UsageServiceTests: XCTestCase {
         XCTAssertTrue(state.isError)
         XCTAssertFalse(state.needsLogin)
     }
+
+    /// Valid JSON that doesn't match UsageResponse's shape must surface the same
+    /// "Bad response" message as malformed JSON, not DecodingError's cryptic text.
+    func testFetchUsage_wrongShapeJSON_setsBadResponseError() async {
+        let fake = FakeTransport()
+        fake.responses["/api/organizations"] = .success(Data(orgsJSON.utf8))
+        fake.responses["/api/organizations/org-123/usage"] = .success(Data(#"{"foo":1}"#.utf8))
+
+        let state = UsageState()
+        let service = UsageService(transport: fake, usageState: state)
+
+        await service.fetchUsage()
+
+        XCTAssertTrue(state.isError)
+        XCTAssertEqual(state.errorMessage, "Bad response")
+    }
+
+    /// One malformed organization (missing uuid) shouldn't take down the whole list —
+    /// the good one should still resolve.
+    func testFetchUsage_orgsListWithBadElement_resolvesGoodOrg() async {
+        let fake = FakeTransport()
+        let orgsWithBadElement = #"[{"name":"No UUID"},{"uuid":"org-123","name":"Acme"}]"#
+        fake.responses["/api/organizations"] = .success(Data(orgsWithBadElement.utf8))
+        fake.responses["/api/organizations/org-123/usage"] = .success(Data(usageJSON.utf8))
+
+        let state = UsageState()
+        let service = UsageService(transport: fake, usageState: state)
+
+        await service.fetchUsage()
+
+        XCTAssertEqual(state.menuBarPercentage, "42%")
+        XCTAssertFalse(state.isError)
+    }
 }

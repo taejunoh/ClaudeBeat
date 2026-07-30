@@ -23,7 +23,13 @@ final class UsageService {
                 try await resolveOrganizationId()
             }
             let data = try await transport.fetchJSON(path: "/api/organizations/\(organizationId)/usage")
-            let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: data)
+            let response: UsageResponse
+            do {
+                response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: data)
+            } catch let error as DecodingError {
+                Self.logDecodeFailure(endpoint: "usage", error: error, body: data)
+                throw TransportError.decode
+            }
             usageState.update(with: response)
             notificationManager?.checkAndNotify(response: response)
         } catch {
@@ -33,9 +39,36 @@ final class UsageService {
 
     private func resolveOrganizationId() async throws {
         let data = try await transport.fetchJSON(path: "/api/organizations")
-        let orgs = try JSONDecoder.makeAPIDecoder().decode([Organization].self, from: data)
+        let orgs: [Organization]
+        do {
+            orgs = try JSONDecoder.makeAPIDecoder().decode(LossyArray<Organization>.self, from: data).elements
+        } catch let error as DecodingError {
+            Self.logDecodeFailure(endpoint: "organizations", error: error, body: data)
+            throw TransportError.decode
+        }
         guard let first = orgs.first else { throw TransportError.decode }
         organizationId = first.uuid
+    }
+
+    /// Writes a diagnostic dump of a decode failure to Library/Logs/decode-failures.log
+    /// inside the app's sandbox container, overwriting each time so it stays bounded.
+    private static func logDecodeFailure(endpoint: String, error: Error, body: Data) {
+        guard let logsDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Logs", isDirectory: true) else { return }
+        do {
+            try FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
+            let logFile = logsDir.appendingPathComponent("decode-failures.log")
+            let bodyString = String(data: body, encoding: .utf8) ?? "<non-UTF8 body>"
+            let contents = """
+            timestamp: \(Date())
+            endpoint: \(endpoint)
+            error: \(String(describing: error))
+            body: \(bodyString)
+            """
+            try contents.write(to: logFile, atomically: true, encoding: .utf8)
+        } catch {
+            // Logging is best-effort; never let a logging failure mask the original error.
+        }
     }
 
     private func handle(_ error: Error) {

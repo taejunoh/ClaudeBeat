@@ -24,6 +24,20 @@ struct UsageBucket: Codable, Sendable {
         case utilization
         case resetsAt = "resets_at"
     }
+
+    init(utilization: Double, resetsAt: Date?) {
+        self.utilization = utilization
+        self.resetsAt = resetsAt
+    }
+
+    // The API is actively A/B-testing fields on this object and has sent
+    // "utilization" as null (and sometimes omitted it entirely). Default to 0.0
+    // rather than failing the whole response decode.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        utilization = try container.decodeIfPresent(Double.self, forKey: .utilization) ?? 0.0
+        resetsAt = try container.decodeIfPresent(Date.self, forKey: .resetsAt)
+    }
 }
 
 struct ExtraUsage: Codable, Sendable {
@@ -36,11 +50,41 @@ struct ExtraUsage: Codable, Sendable {
         case monthlyLimit = "monthly_limit"
         case usedCredits = "used_credits"
     }
+
+    // "is_enabled" has been observed null; treat null/missing as disabled.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        isEnabled = try container.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? false
+        monthlyLimit = try container.decodeIfPresent(Int.self, forKey: .monthlyLimit)
+        usedCredits = try container.decodeIfPresent(Int.self, forKey: .usedCredits)
+    }
 }
 
 struct Organization: Codable, Sendable {
     let uuid: String
     let name: String?
+}
+
+/// Decodes an array leniently: elements that fail to decode (e.g. missing required
+/// fields) are dropped instead of failing the whole array.
+struct LossyArray<Element: Decodable>: Decodable {
+    let elements: [Element]
+
+    private struct Empty: Decodable {}
+
+    init(from decoder: Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        var elements: [Element] = []
+        while !container.isAtEnd {
+            if let element = try? container.decode(Element.self) {
+                elements.append(element)
+            } else {
+                // Consume the element so the container advances even on failure.
+                _ = try? container.decode(Empty.self)
+            }
+        }
+        self.elements = elements
+    }
 }
 
 extension JSONDecoder {
