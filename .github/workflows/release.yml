@@ -135,21 +135,36 @@ jobs:
           cd "$PROJECT_DIR/build/export"
           ditto -c -k --sequesterRsrc --keepParent "${APP_NAME}.app" "${APP_NAME}.zip"
 
-      - name: Compute SHA256
-        id: hash
-        run: |
-          SHA=$(shasum -a 256 "$PROJECT_DIR/build/export/${APP_NAME}.zip" | awk '{print $1}')
-          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
-          echo "SHA256: $SHA"
-
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            "$PROJECT_DIR/build/export/${APP_NAME}.zip" \
-            --title "${APP_NAME} ${GITHUB_REF_NAME}" \
-            --generate-notes
+          # Idempotent so a failed run can be rerun. A rerun rebuilds and re-notarizes,
+          # producing a byte-different zip, so replacing an already published asset
+          # would invalidate the checksum anyone has already downloaded.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "Release ${GITHUB_REF_NAME} already exists; keeping its published asset."
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              "$PROJECT_DIR/build/export/${APP_NAME}.zip" \
+              --title "${APP_NAME} ${GITHUB_REF_NAME}" \
+              --generate-notes
+          fi
+
+      - name: Compute SHA256 of the published asset
+        id: hash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Hash what users actually download rather than this run's local build, so
+          # the cask checksum stays correct when the release came from an earlier run.
+          rm -rf "$RUNNER_TEMP/published"
+          gh release download "${GITHUB_REF_NAME}" \
+            --pattern "${APP_NAME}.zip" \
+            --dir "$RUNNER_TEMP/published"
+          SHA=$(shasum -a 256 "$RUNNER_TEMP/published/${APP_NAME}.zip" | awk '{print $1}')
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "SHA256: $SHA"
 
       - name: Update Homebrew tap
         env:
@@ -166,9 +181,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Casks/claudebeat.rb
-          git diff --cached
-          git commit -m "claudebeat ${VERSION}"
-          git push
+          if git diff --cached --quiet; then
+            echo "Cask already at ${VERSION} with this checksum; nothing to push."
+          else
+            git diff --cached
+            git commit -m "claudebeat ${VERSION}"
+            git push
+          fi
 
       - name: Clean up keychain
         if: always()
