@@ -101,6 +101,14 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 ## What's New
 
+### v1.0.7
+- **Settings now shows the real version** — v1.0.5 and v1.0.6 both reported themselves as "1.0.0" because the release build discarded the version from the release tag
+
+### v1.0.6
+- **Survives claude.ai usage API changes** — the endpoint is A/B-testing fields (null `utilization`, null `is_enabled`, unmodeled experiment keys), which used to blank the whole popover with "The data couldn't be read because it is missing."
+- Malformed organization entries are skipped instead of failing the entire list
+- If a response still can't be read, the popover shows **Bad response** and the offending body is dumped to `~/Library/Containers/com.claudebeat.macos/Data/Library/Logs/decode-failures.log` for diagnosis
+
 ### v1.0.5
 - **Fixes "no numbers" on macOS 26 (Tahoe)** — menu bar text now renders via the button's title, compatible with the Liquid Glass menu bar
 - **Works past claude.ai's Cloudflare check** — usage is fetched through a hidden WebKit view that passes the bot challenge (plain requests now get HTTP 403)
