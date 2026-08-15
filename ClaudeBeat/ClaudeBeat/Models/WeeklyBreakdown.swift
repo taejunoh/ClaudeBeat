@@ -65,10 +65,16 @@ enum WeeklyBreakdown {
     /// Compared with a minute of tolerance: observed responses differ by microseconds
     /// (…983485 vs …983652) for what is plainly the same reset, so exact equality would
     /// never find a shared time.
+    ///
+    /// Agreement is judged by the spread of the whole set (max − min), not by each date's
+    /// distance from an arbitrary pivot — pairwise-to-one-element comparisons aren't
+    /// transitive, so that approach could call a set "shared" even when its extremes were
+    /// more than a minute apart.
     static func sharedResetDate(for items: [WeeklyItem]) -> Date? {
         let dates = items.compactMap(\.resetsAt)
         guard dates.count == items.count, let first = dates.first else { return nil }
-        guard dates.allSatisfy({ abs($0.timeIntervalSince(first)) < 60 }) else { return nil }
+        guard let min = dates.min(), let max = dates.max() else { return nil }
+        guard max.timeIntervalSince(min) < 60 else { return nil }
         return first
     }
 }

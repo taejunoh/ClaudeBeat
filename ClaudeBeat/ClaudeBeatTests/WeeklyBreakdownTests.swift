@@ -101,6 +101,33 @@ final class WeeklyBreakdownTests: XCTestCase {
         XCTAssertNil(WeeklyBreakdown.sharedResetDate(for: items))
     }
 
+    func testNoSharedResetWhenPairwiseWithinToleranceButSpreadIsNot() {
+        // T, T-59s, T+59s: each is within 60s of the pivot `T`, but the outer two differ by
+        // 118s. Agreement must be judged by the whole set's spread, not distance from one
+        // arbitrarily chosen element.
+        let items = [
+            WeeklyItem(id: "b", label: "Fable", utilization: 82, resetsAt: weeklyReset),
+            WeeklyItem(id: "a", label: "All models", utilization: 46, resetsAt: weeklyReset.addingTimeInterval(-59)),
+            WeeklyItem(id: "c", label: "Opus", utilization: 12, resetsAt: weeklyReset.addingTimeInterval(59))
+        ]
+
+        XCTAssertNil(WeeklyBreakdown.sharedResetDate(for: items))
+    }
+
+    func testSharedResetToleranceBoundaryIsOneMinute() {
+        let items = [
+            WeeklyItem(id: "a", label: "All models", utilization: 46, resetsAt: weeklyReset),
+            WeeklyItem(id: "b", label: "Fable", utilization: 82, resetsAt: weeklyReset.addingTimeInterval(59.9))
+        ]
+        XCTAssertEqual(WeeklyBreakdown.sharedResetDate(for: items), weeklyReset)
+
+        let itemsOverBoundary = [
+            WeeklyItem(id: "a", label: "All models", utilization: 46, resetsAt: weeklyReset),
+            WeeklyItem(id: "b", label: "Fable", utilization: 82, resetsAt: weeklyReset.addingTimeInterval(60.1))
+        ]
+        XCTAssertNil(WeeklyBreakdown.sharedResetDate(for: itemsOverBoundary))
+    }
+
     func testNoSharedResetWhenAnyItemLacksOne() {
         let items = [
             WeeklyItem(id: "a", label: "All models", utilization: 46, resetsAt: weeklyReset),
