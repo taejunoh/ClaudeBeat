@@ -3,16 +3,12 @@ import Foundation
 struct UsageResponse: Decodable, Sendable {
     let fiveHour: UsageBucket
     let sevenDay: UsageBucket
-    let sevenDayOpus: UsageBucket?
-    let sevenDaySonnet: UsageBucket?
     let extraUsage: ExtraUsage?
     let limits: [UsageLimit]
 
     enum CodingKeys: String, CodingKey {
         case fiveHour = "five_hour"
         case sevenDay = "seven_day"
-        case sevenDayOpus = "seven_day_opus"
-        case sevenDaySonnet = "seven_day_sonnet"
         case extraUsage = "extra_usage"
         case limits
     }
@@ -20,15 +16,11 @@ struct UsageResponse: Decodable, Sendable {
     init(
         fiveHour: UsageBucket,
         sevenDay: UsageBucket,
-        sevenDayOpus: UsageBucket? = nil,
-        sevenDaySonnet: UsageBucket? = nil,
         extraUsage: ExtraUsage? = nil,
         limits: [UsageLimit] = []
     ) {
         self.fiveHour = fiveHour
         self.sevenDay = sevenDay
-        self.sevenDayOpus = sevenDayOpus
-        self.sevenDaySonnet = sevenDaySonnet
         self.extraUsage = extraUsage
         self.limits = limits
     }
@@ -37,8 +29,6 @@ struct UsageResponse: Decodable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         fiveHour = try container.decode(UsageBucket.self, forKey: .fiveHour)
         sevenDay = try container.decode(UsageBucket.self, forKey: .sevenDay)
-        sevenDayOpus = try container.decodeIfPresent(UsageBucket.self, forKey: .sevenDayOpus)
-        sevenDaySonnet = try container.decodeIfPresent(UsageBucket.self, forKey: .sevenDaySonnet)
         extraUsage = try container.decodeIfPresent(ExtraUsage.self, forKey: .extraUsage)
         limits = try container.decodeIfPresent(LossyArray<UsageLimit>.self, forKey: .limits)?.elements ?? []
     }

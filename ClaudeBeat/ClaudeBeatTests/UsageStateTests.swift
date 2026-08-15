@@ -10,8 +10,6 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 69.0, resetsAt: resetDate),
             sevenDay: UsageBucket(utilization: 15.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil,
-            sevenDaySonnet: nil,
             extraUsage: nil
         ))
 
@@ -31,7 +29,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 30.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertEqual(state.colorLevel, .green)
     }
@@ -41,7 +39,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 65.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertEqual(state.colorLevel, .yellow)
     }
@@ -51,7 +49,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 90.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertEqual(state.colorLevel, .red)
     }
@@ -63,7 +61,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 50.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertNotNil(state.lastUpdated)
     }
@@ -79,7 +77,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 5.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertFalse(state.needsLogin)
         XCTAssertFalse(state.isError)

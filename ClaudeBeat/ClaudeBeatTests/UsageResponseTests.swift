@@ -14,13 +14,6 @@ final class UsageResponseTests: XCTestCase {
                 "utilization": 15.2,
                 "resets_at": "2026-04-13T12:59:00.000Z"
             },
-            "seven_day_opus": {
-                "utilization": 8.0
-            },
-            "seven_day_sonnet": {
-                "utilization": 12.3,
-                "resets_at": "2026-04-13T12:59:00.000Z"
-            },
             "extra_usage": {
                 "is_enabled": true,
                 "monthly_limit": 5000,
@@ -34,8 +27,6 @@ final class UsageResponseTests: XCTestCase {
         XCTAssertEqual(response.fiveHour.utilization, 42.5)
         XCTAssertNotNil(response.fiveHour.resetsAt)
         XCTAssertEqual(response.sevenDay.utilization, 15.2)
-        XCTAssertEqual(response.sevenDayOpus?.utilization, 8.0)
-        XCTAssertEqual(response.sevenDaySonnet?.utilization, 12.3)
         XCTAssertEqual(response.extraUsage?.isEnabled, true)
         XCTAssertEqual(response.extraUsage?.monthlyLimit, 5000)
         XCTAssertEqual(response.extraUsage?.usedCredits, 1200)
@@ -58,8 +49,6 @@ final class UsageResponseTests: XCTestCase {
         let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
 
         XCTAssertEqual(response.fiveHour.utilization, 0.0)
-        XCTAssertNil(response.sevenDayOpus)
-        XCTAssertNil(response.sevenDaySonnet)
         XCTAssertNil(response.extraUsage)
     }
 
@@ -101,8 +90,6 @@ final class UsageResponseTests: XCTestCase {
                 "remaining_dollars": null
             },
             "seven_day_oauth_apps": null,
-            "seven_day_opus": null,
-            "seven_day_sonnet": null,
             "seven_day_cowork": null,
             "seven_day_omelette": null,
             "tangelo": null,
@@ -132,7 +119,6 @@ final class UsageResponseTests: XCTestCase {
         let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
 
         XCTAssertEqual(response.fiveHour.utilization, 11.0)
-        XCTAssertNil(response.sevenDayOpus)
         XCTAssertEqual(response.extraUsage?.isEnabled, false)
     }
 

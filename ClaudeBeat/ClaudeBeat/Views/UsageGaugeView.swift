@@ -4,8 +4,6 @@ struct UsageGaugeView: View {
     let title: String
     let utilization: Double
     let resetsAt: Date?
-    let opusUtilization: Double?
-    let sonnetUtilization: Double?
 
     private var percentage: Int { Int(utilization) }
 
@@ -43,17 +41,6 @@ struct UsageGaugeView: View {
                 Text("Resets in \(TimeFormatting.popoverString(until: resetsAt))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
-
-            if let opus = opusUtilization, let sonnet = sonnetUtilization {
-                HStack(spacing: 12) {
-                    Label("Opus \(Int(opus))%", systemImage: "circle.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.purple)
-                    Label("Sonnet \(Int(sonnet))%", systemImage: "circle.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.blue)
-                }
             }
         }
         .padding(.horizontal)
