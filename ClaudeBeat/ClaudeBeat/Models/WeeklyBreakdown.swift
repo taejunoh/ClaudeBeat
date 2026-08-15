@@ -19,7 +19,7 @@ enum WeeklyBreakdown {
     /// before `limits` existed.
     static func items(from response: UsageResponse) -> [WeeklyItem] {
         var allModels: WeeklyItem?
-        var scoped: [WeeklyItem] = []
+        var scopedCandidates: [(label: String, percent: Double, resetsAt: Date?)] = []
 
         for limit in response.limits {
             switch limit.kind {
@@ -33,12 +33,7 @@ enum WeeklyBreakdown {
             case "weekly_scoped":
                 // An unlabeled gauge is noise — the server owns the label.
                 guard let label = limit.scope?.model?.displayName, !label.isEmpty else { continue }
-                scoped.append(WeeklyItem(
-                    id: "weekly_scoped:\(label)",
-                    label: label,
-                    utilization: limit.percent,
-                    resetsAt: limit.resetsAt
-                ))
+                scopedCandidates.append((label: label, percent: limit.percent, resetsAt: limit.resetsAt))
             default:
                 continue
             }
@@ -46,7 +41,20 @@ enum WeeklyBreakdown {
 
         // Server array order is not contractual; sort so gauges don't swap places between
         // refreshes.
-        scoped.sort { $0.label.localizedStandardCompare($1.label) == .orderedAscending }
+        scopedCandidates.sort { $0.label.localizedStandardCompare($1.label) == .orderedAscending }
+
+        // `scope.surface` isn't decoded yet, so two distinct surfaces for the same model
+        // (e.g. "Fable" on Claude Code and on web) currently arrive with the same label.
+        // Fold the post-sort position into the id so those entries don't collide — the
+        // position is stable across refreshes as long as the server's set of labels is.
+        let scoped = scopedCandidates.enumerated().map { index, candidate in
+            WeeklyItem(
+                id: "weekly_scoped:\(index):\(candidate.label)",
+                label: candidate.label,
+                utilization: candidate.percent,
+                resetsAt: candidate.resetsAt
+            )
+        }
 
         let items = [allModels].compactMap { $0 } + scoped
         guard items.isEmpty else { return items }

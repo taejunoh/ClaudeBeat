@@ -65,6 +65,22 @@ final class WeeklyBreakdownTests: XCTestCase {
         XCTAssertEqual(items.map(\.label), ["All models", "Fable"])
     }
 
+    /// `scope.surface` isn't decoded yet; the moment the server populates it, the same
+    /// model on two surfaces (e.g. Fable on Claude Code and Fable on web) arrives as two
+    /// `weekly_scoped` entries sharing a `display_name`. Their ids must stay distinct so
+    /// SwiftUI's `ForEach` over `WeeklyItem.id` doesn't collapse them.
+    func testScopedEntriesWithSameLabelGetDistinctIds() {
+        let items = WeeklyBreakdown.items(from: response(limits: [
+            UsageLimit(kind: "weekly_all", percent: 46),
+            scoped("Fable", 82),
+            scoped("Fable", 91)
+        ]))
+
+        let fableItems = items.filter { $0.label == "Fable" }
+        XCTAssertEqual(fableItems.count, 2)
+        XCTAssertEqual(Set(fableItems.map(\.id)).count, 2)
+    }
+
     func testFallsBackToSevenDayWhenLimitsIsEmpty() {
         let items = WeeklyBreakdown.items(from: response(limits: []))
 
@@ -139,5 +155,44 @@ final class WeeklyBreakdownTests: XCTestCase {
 
     func testNoSharedResetForEmptyList() {
         XCTAssertNil(WeeklyBreakdown.sharedResetDate(for: []))
+    }
+
+    /// End-to-end seam test: decodes real captured JSON (copied from `capturedJSON` in
+    /// UsageLimitTests.swift) all the way through to `WeeklyBreakdown.items(from:)`,
+    /// rather than starting from hand-built `UsageLimit` values. A wrong `kind` string
+    /// literal or a wrong CodingKey in the decode path would leave every other test in
+    /// this suite passing while the app silently fell back to `seven_day`.
+    ///
+    /// The payload's two weekly entries differ by microseconds (…983485 vs …983652) —
+    /// real drift, not a synthetic offset — so this also exercises `sharedResetDate`
+    /// against the data that motivated its tolerance.
+    func testEndToEndDecodedPayloadProducesWeeklyItems() throws {
+        let capturedJSON = """
+        {
+            "five_hour": { "utilization": 4.0, "resets_at": "2026-08-15T16:49:59.983468+00:00" },
+            "seven_day": { "utilization": 46.0, "resets_at": "2026-08-20T09:59:59.983485+00:00" },
+            "seven_day_opus": null,
+            "seven_day_sonnet": null,
+            "nimbus_quill": { "utilization": 0.0, "resets_at": null },
+            "amber_ladder": null,
+            "limits": [
+                { "kind": "session", "group": "session", "percent": 4, "severity": "normal",
+                  "resets_at": "2026-08-15T16:49:59.983468+00:00", "scope": null, "is_active": false },
+                { "kind": "weekly_all", "group": "weekly", "percent": 46, "severity": "normal",
+                  "resets_at": "2026-08-20T09:59:59.983485+00:00", "scope": null, "is_active": false },
+                { "kind": "weekly_scoped", "group": "weekly", "percent": 82, "severity": "warning",
+                  "resets_at": "2026-08-20T09:59:59.983652+00:00",
+                  "scope": { "model": { "id": "abc", "display_name": "Fable" }, "surface": null },
+                  "is_active": true }
+            ]
+        }
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: capturedJSON)
+        let items = WeeklyBreakdown.items(from: response)
+
+        XCTAssertEqual(items.map(\.label), ["All models", "Fable"])
+        XCTAssertEqual(items.map(\.utilization), [46, 82])
+        XCTAssertNotNil(WeeklyBreakdown.sharedResetDate(for: items))
     }
 }

@@ -34,8 +34,6 @@ final class UsageLimitTests: XCTestCase {
 
         let scoped = try XCTUnwrap(response.limits.first { $0.kind == "weekly_scoped" })
         XCTAssertEqual(scoped.percent, 82)
-        XCTAssertEqual(scoped.severity, "warning")
-        XCTAssertTrue(scoped.isActive)
         XCTAssertEqual(scoped.scope?.model?.displayName, "Fable")
         XCTAssertNotNil(scoped.resetsAt)
     }
@@ -100,7 +98,6 @@ final class UsageLimitTests: XCTestCase {
         let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
 
         XCTAssertEqual(response.limits.map(\.percent), [0, 0])
-        XCTAssertFalse(response.limits[0].isActive)
     }
 
     func testUnknownScopeSurfaceShapeDoesNotFailDecode() throws {
@@ -119,5 +116,68 @@ final class UsageLimitTests: XCTestCase {
         let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
 
         XCTAssertEqual(response.limits.first?.scope?.model?.displayName, "Fable")
+    }
+
+    /// `severity` and `is_active` are no longer decoded at all, so a server-side type
+    /// change to either (exactly what happened to the `limits` array itself) is now
+    /// ignored rather than dropping the whole entry — including the Fable gauge it's
+    /// attached to.
+    func testObjectShapedSeverityAndStringShapedIsActiveAreIgnored() throws {
+        let json = """
+        {
+            "five_hour": { "utilization": 1.0, "resets_at": "2026-08-15T16:49:59.983468+00:00" },
+            "seven_day": { "utilization": 2.0, "resets_at": "2026-08-20T09:59:59.983485+00:00" },
+            "limits": [
+                { "kind": "weekly_scoped", "percent": 82, "severity": { "level": "warning" },
+                  "is_active": "true",
+                  "scope": { "model": { "display_name": "Fable" } } }
+            ]
+        }
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
+
+        XCTAssertEqual(response.limits.count, 1)
+        XCTAssertEqual(response.limits.first?.scope?.model?.displayName, "Fable")
+        XCTAssertEqual(response.limits.first?.percent, 82)
+    }
+
+    func testStringShapedPercentSurvivesAsZero() throws {
+        let json = """
+        {
+            "five_hour": { "utilization": 1.0, "resets_at": "2026-08-15T16:49:59.983468+00:00" },
+            "seven_day": { "utilization": 2.0, "resets_at": "2026-08-20T09:59:59.983485+00:00" },
+            "limits": [
+                { "kind": "weekly_scoped", "percent": "82",
+                  "scope": { "model": { "display_name": "Fable" } } }
+            ]
+        }
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
+
+        XCTAssertEqual(response.limits.count, 1)
+        XCTAssertEqual(response.limits.first?.scope?.model?.displayName, "Fable")
+        XCTAssertEqual(response.limits.first?.percent, 0)
+    }
+
+    func testEpochIntegerResetsAtSurvivesAsNilReset() throws {
+        let json = """
+        {
+            "five_hour": { "utilization": 1.0, "resets_at": "2026-08-15T16:49:59.983468+00:00" },
+            "seven_day": { "utilization": 2.0, "resets_at": "2026-08-20T09:59:59.983485+00:00" },
+            "limits": [
+                { "kind": "weekly_scoped", "percent": 82, "resets_at": 1755684000,
+                  "scope": { "model": { "display_name": "Fable" } } }
+            ]
+        }
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: json)
+
+        XCTAssertEqual(response.limits.count, 1)
+        XCTAssertEqual(response.limits.first?.scope?.model?.displayName, "Fable")
+        XCTAssertEqual(response.limits.first?.percent, 82)
+        XCTAssertNil(response.limits.first?.resetsAt)
     }
 }

@@ -8,46 +8,44 @@ import Foundation
 struct UsageLimit: Decodable, Sendable {
     let kind: String
     let percent: Double
-    let severity: String?
     let resetsAt: Date?
     let scope: LimitScope?
-    let isActive: Bool
 
     enum CodingKeys: String, CodingKey {
         case kind
         case percent
-        case severity
         case resetsAt = "resets_at"
         case scope
-        case isActive = "is_active"
     }
 
     init(
         kind: String,
         percent: Double,
-        severity: String? = nil,
         resetsAt: Date? = nil,
-        scope: LimitScope? = nil,
-        isActive: Bool = false
+        scope: LimitScope? = nil
     ) {
         self.kind = kind
         self.percent = percent
-        self.severity = severity
         self.resetsAt = resetsAt
         self.scope = scope
-        self.isActive = isActive
     }
 
     // `kind` is the one required field: an entry without it cannot be routed, so letting
     // the decode throw lets LossyArray drop just that element.
+    //
+    // Every other field degrades instead of throwing: `decodeIfPresent` alone only
+    // covers a missing key or JSON null, but a *type* mismatch still throws, and inside
+    // LossyArray a throw drops the whole entry. `try?` around each decodeIfPresent turns
+    // that throw into nil too, at the cost of a double optional (T??) that we flatten by
+    // hand — `?? nil` collapses it to T? without silently coercing a real nil-vs-0
+    // ambiguity, then `?? 0` supplies the field's own default.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         kind = try container.decode(String.self, forKey: .kind)
-        percent = try container.decodeIfPresent(Double.self, forKey: .percent) ?? 0
-        severity = try container.decodeIfPresent(String.self, forKey: .severity)
-        resetsAt = try container.decodeIfPresent(Date.self, forKey: .resetsAt)
-        scope = try container.decodeIfPresent(LimitScope.self, forKey: .scope)
-        isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? false
+        let decodedPercent = (try? container.decodeIfPresent(Double.self, forKey: .percent)) ?? nil
+        percent = decodedPercent ?? 0
+        resetsAt = (try? container.decodeIfPresent(Date.self, forKey: .resetsAt)) ?? nil
+        scope = (try? container.decodeIfPresent(LimitScope.self, forKey: .scope)) ?? nil
     }
 }
 
