@@ -40,8 +40,15 @@ enum WeeklyBreakdown {
         }
 
         // Server array order is not contractual; sort so gauges don't swap places between
-        // refreshes.
-        scopedCandidates.sort { $0.label.localizedStandardCompare($1.label) == .orderedAscending }
+        // refreshes. When two entries share a label (before `scope.surface` is decoded),
+        // break ties on percent to ensure a deterministic order independent of input.
+        scopedCandidates.sort {
+            let labelOrder = $0.label.localizedStandardCompare($1.label)
+            if labelOrder == .orderedSame {
+                return $0.percent < $1.percent
+            }
+            return labelOrder == .orderedAscending
+        }
 
         // `scope.surface` isn't decoded yet, so two distinct surfaces for the same model
         // (e.g. "Fable" on Claude Code and on web) currently arrive with the same label.

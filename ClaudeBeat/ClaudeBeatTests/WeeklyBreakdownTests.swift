@@ -195,4 +195,39 @@ final class WeeklyBreakdownTests: XCTestCase {
         XCTAssertEqual(items.map(\.utilization), [46, 82])
         XCTAssertNotNil(WeeklyBreakdown.sharedResetDate(for: items))
     }
+
+    /// Two `weekly_scoped` entries with the same label but different percents must maintain
+    /// consistent ordering and ids regardless of the order the server sends them. If sort
+    /// has no tie-breaker, the order depends on the input, causing the entries to swap their
+    /// positions (and thus their ids) between polls.
+    func testScopedEntriesWithSameLabelAreStableAcrossInputOrder() {
+        let entries = [
+            scoped("Fable", 82),
+            scoped("Fable", 91)
+        ]
+        let entriesReversed = [
+            scoped("Fable", 91),
+            scoped("Fable", 82)
+        ]
+
+        let items1 = WeeklyBreakdown.items(from: response(limits: [
+            UsageLimit(kind: "weekly_all", percent: 46)
+        ] + entries))
+
+        let items2 = WeeklyBreakdown.items(from: response(limits: [
+            UsageLimit(kind: "weekly_all", percent: 46)
+        ] + entriesReversed))
+
+        let fableItems1 = items1.filter { $0.label == "Fable" }.sorted { $0.utilization < $1.utilization }
+        let fableItems2 = items2.filter { $0.label == "Fable" }.sorted { $0.utilization < $1.utilization }
+
+        XCTAssertEqual(fableItems1.count, 2)
+        XCTAssertEqual(fableItems2.count, 2)
+
+        for (item1, item2) in zip(fableItems1, fableItems2) {
+            XCTAssertEqual(item1.label, item2.label)
+            XCTAssertEqual(item1.utilization, item2.utilization)
+            XCTAssertEqual(item1.id, item2.id)
+        }
+    }
 }
