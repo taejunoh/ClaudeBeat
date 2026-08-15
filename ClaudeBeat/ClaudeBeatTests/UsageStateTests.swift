@@ -103,4 +103,31 @@ final class UsageStateTests: XCTestCase {
         XCTAssertFalse(state.needsLogin)
         XCTAssertEqual(state.errorMessage, "Timeout")
     }
+
+    func testWeeklyItems_noData() {
+        let state = UsageState()
+        XCTAssertTrue(state.weeklyItems.isEmpty)
+    }
+
+    func testWeeklyItems_fromLimits() {
+        let state = UsageState()
+        let reset = Date().addingTimeInterval(5 * 24 * 3600)
+        state.update(with: UsageResponse(
+            fiveHour: UsageBucket(utilization: 4.0, resetsAt: Date().addingTimeInterval(3600)),
+            sevenDay: UsageBucket(utilization: 46.0, resetsAt: reset),
+            extraUsage: nil,
+            limits: [
+                UsageLimit(kind: "weekly_all", percent: 46, resetsAt: reset),
+                UsageLimit(
+                    kind: "weekly_scoped",
+                    percent: 82,
+                    resetsAt: reset,
+                    scope: LimitScope(model: LimitModel(displayName: "Fable"))
+                )
+            ]
+        ))
+
+        XCTAssertEqual(state.weeklyItems.map(\.label), ["All models", "Fable"])
+        XCTAssertEqual(state.weeklyItems.map(\.utilization), [46, 82])
+    }
 }

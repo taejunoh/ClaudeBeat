@@ -33,6 +33,11 @@ final class UsageState {
         return TimeFormatting.popoverString(until: resetsAt)
     }
 
+    var weeklyItems: [WeeklyItem] {
+        guard let response else { return [] }
+        return WeeklyBreakdown.items(from: response)
+    }
+
     var colorLevel: ColorLevel {
         guard let utilization = response?.fiveHour.utilization else { return .gray }
         switch utilization {
