@@ -39,17 +39,12 @@ struct PopoverView: View {
         UsageGaugeView(
             title: "Session (5h)",
             utilization: response.fiveHour.utilization,
-            resetsAt: response.fiveHour.resetsAt,
-            opusUtilization: response.sevenDayOpus?.utilization,
-            sonnetUtilization: response.sevenDaySonnet?.utilization
+            resetsAt: response.fiveHour.resetsAt
         )
 
         Divider()
 
-        WeeklyUsageView(
-            allModels: response.sevenDay,
-            sonnetOnly: response.sevenDaySonnet
-        )
+        WeeklyUsageView(items: usageState.weeklyItems)
 
         if let extra = response.extraUsage, extra.isEnabled {
             Divider()

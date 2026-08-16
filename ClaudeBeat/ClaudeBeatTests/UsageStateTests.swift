@@ -10,8 +10,6 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 69.0, resetsAt: resetDate),
             sevenDay: UsageBucket(utilization: 15.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil,
-            sevenDaySonnet: nil,
             extraUsage: nil
         ))
 
@@ -31,7 +29,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 30.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertEqual(state.colorLevel, .green)
     }
@@ -41,7 +39,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 65.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertEqual(state.colorLevel, .yellow)
     }
@@ -51,7 +49,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 90.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertEqual(state.colorLevel, .red)
     }
@@ -63,7 +61,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 50.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertNotNil(state.lastUpdated)
     }
@@ -79,7 +77,7 @@ final class UsageStateTests: XCTestCase {
         state.update(with: UsageResponse(
             fiveHour: UsageBucket(utilization: 10.0, resetsAt: Date().addingTimeInterval(3600)),
             sevenDay: UsageBucket(utilization: 5.0, resetsAt: Date().addingTimeInterval(7 * 24 * 3600)),
-            sevenDayOpus: nil, sevenDaySonnet: nil, extraUsage: nil
+            extraUsage: nil
         ))
         XCTAssertFalse(state.needsLogin)
         XCTAssertFalse(state.isError)
@@ -102,5 +100,32 @@ final class UsageStateTests: XCTestCase {
         XCTAssertTrue(state.isError)
         XCTAssertFalse(state.needsLogin)
         XCTAssertEqual(state.errorMessage, "Timeout")
+    }
+
+    func testWeeklyItems_noData() {
+        let state = UsageState()
+        XCTAssertTrue(state.weeklyItems.isEmpty)
+    }
+
+    func testWeeklyItems_fromLimits() {
+        let state = UsageState()
+        let reset = Date().addingTimeInterval(5 * 24 * 3600)
+        state.update(with: UsageResponse(
+            fiveHour: UsageBucket(utilization: 4.0, resetsAt: Date().addingTimeInterval(3600)),
+            sevenDay: UsageBucket(utilization: 46.0, resetsAt: reset),
+            extraUsage: nil,
+            limits: [
+                UsageLimit(kind: "weekly_all", percent: 46, resetsAt: reset),
+                UsageLimit(
+                    kind: "weekly_scoped",
+                    percent: 82,
+                    resetsAt: reset,
+                    scope: LimitScope(model: LimitModel(displayName: "Fable"))
+                )
+            ]
+        ))
+
+        XCTAssertEqual(state.weeklyItems.map(\.label), ["All models", "Fable"])
+        XCTAssertEqual(state.weeklyItems.map(\.utilization), [46, 82])
     }
 }

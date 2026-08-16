@@ -1,18 +1,36 @@
 import Foundation
 
-struct UsageResponse: Codable, Sendable {
+struct UsageResponse: Decodable, Sendable {
     let fiveHour: UsageBucket
     let sevenDay: UsageBucket
-    let sevenDayOpus: UsageBucket?
-    let sevenDaySonnet: UsageBucket?
     let extraUsage: ExtraUsage?
+    let limits: [UsageLimit]
 
     enum CodingKeys: String, CodingKey {
         case fiveHour = "five_hour"
         case sevenDay = "seven_day"
-        case sevenDayOpus = "seven_day_opus"
-        case sevenDaySonnet = "seven_day_sonnet"
         case extraUsage = "extra_usage"
+        case limits
+    }
+
+    init(
+        fiveHour: UsageBucket,
+        sevenDay: UsageBucket,
+        extraUsage: ExtraUsage? = nil,
+        limits: [UsageLimit] = []
+    ) {
+        self.fiveHour = fiveHour
+        self.sevenDay = sevenDay
+        self.extraUsage = extraUsage
+        self.limits = limits
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        fiveHour = try container.decode(UsageBucket.self, forKey: .fiveHour)
+        sevenDay = try container.decode(UsageBucket.self, forKey: .sevenDay)
+        extraUsage = try container.decodeIfPresent(ExtraUsage.self, forKey: .extraUsage)
+        limits = try container.decodeIfPresent(LossyArray<UsageLimit>.self, forKey: .limits)?.elements ?? []
     }
 }
 

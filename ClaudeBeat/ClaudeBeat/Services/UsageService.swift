@@ -23,6 +23,7 @@ final class UsageService {
                 try await resolveOrganizationId()
             }
             let data = try await transport.fetchJSON(path: "/api/organizations/\(organizationId)/usage")
+            Self.logRawResponse(endpoint: "usage", body: data)
             let response: UsageResponse
             do {
                 response = try JSONDecoder.makeAPIDecoder().decode(UsageResponse.self, from: data)
@@ -50,22 +51,47 @@ final class UsageService {
         organizationId = first.uuid
     }
 
+    /// Writes the last raw response body to Library/Logs/last-response.log, overwriting each
+    /// time so it stays bounded. The usage endpoint's shape drifts (fields appear, disappear,
+    /// and go null without notice), so keeping the most recent payload on disk is what makes
+    /// the next drift diagnosable without guessing at key names.
+    private static func logRawResponse(endpoint: String, body: Data) {
+        let bodyString = String(data: body, encoding: .utf8) ?? "<non-UTF8 body>"
+        write(
+            """
+            timestamp: \(Date())
+            endpoint: \(endpoint)
+            body: \(bodyString)
+            """,
+            to: "last-response.log"
+        )
+    }
+
     /// Writes a diagnostic dump of a decode failure to Library/Logs/decode-failures.log
     /// inside the app's sandbox container, overwriting each time so it stays bounded.
     private static func logDecodeFailure(endpoint: String, error: Error, body: Data) {
-        guard let logsDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("Logs", isDirectory: true) else { return }
-        do {
-            try FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
-            let logFile = logsDir.appendingPathComponent("decode-failures.log")
-            let bodyString = String(data: body, encoding: .utf8) ?? "<non-UTF8 body>"
-            let contents = """
+        let bodyString = String(data: body, encoding: .utf8) ?? "<non-UTF8 body>"
+        write(
+            """
             timestamp: \(Date())
             endpoint: \(endpoint)
             error: \(String(describing: error))
             body: \(bodyString)
-            """
-            try contents.write(to: logFile, atomically: true, encoding: .utf8)
+            """,
+            to: "decode-failures.log"
+        )
+    }
+
+    private static func write(_ contents: String, to fileName: String) {
+        guard let logsDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Logs", isDirectory: true) else { return }
+        do {
+            try FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
+            try contents.write(
+                to: logsDir.appendingPathComponent(fileName),
+                atomically: true,
+                encoding: .utf8
+            )
         } catch {
             // Logging is best-effort; never let a logging failure mask the original error.
         }

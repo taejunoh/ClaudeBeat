@@ -38,7 +38,7 @@
 - **Three display modes** — Current Session (5h), Weekly Limit (7d), or Both
 - **Popover dashboard** — Click to see detailed usage with circular gauges and last-updated timestamp
   - Session (5h) utilization with reset countdown
-  - Weekly (7d) breakdown: All models + Sonnet only with individual reset times
+  - Weekly (7d) breakdown: All models plus a gauge per model the API reports (e.g. Fable), with a shared reset time
   - Extra Usage credits as a horizontal bar ($used / $limit with %)
 - **Session reset notification** — Get notified when your 5h session resets so you can get back to work
 - **Threshold alerts** — macOS notifications when usage hits your configured threshold
@@ -119,7 +119,7 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 ### v1.0.0
 - Real-time 5h session and 7d weekly usage display in menu bar
 - Popover dashboard with circular gauges
-- Weekly breakdown: All models + Sonnet only
+- Weekly breakdown: All models + a gauge per model the API reports
 - Extra usage tracking with dollar amounts
 - Session reset notifications
 - Configurable threshold alerts (session, weekly, extra usage)
