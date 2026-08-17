@@ -106,7 +106,8 @@ final class NotificationManager {
         return labelOrder.compactMap { bestByLabel[$0] }
     }
 
-    /// The weekly limits to notify about on this poll, in list order, advancing the latch.
+    /// The weekly limits to notify about on this poll, one per label in first-appearance
+    /// order, advancing the latch.
     ///
     /// Every weekly limit is watched, not just the all-models total: a per-model limit
     /// routinely binds first — Fable at 86% against 48% for all models — and watching the
