@@ -87,6 +87,7 @@ final class WeeklyBreakdownTests: XCTestCase {
         XCTAssertEqual(items.map(\.label), ["All models"])
         XCTAssertEqual(items.first?.utilization, 46)
         XCTAssertEqual(items.first?.resetsAt, weeklyReset)
+        XCTAssertEqual(items.first?.id, "weekly_all")
     }
 
     func testFallsBackToSevenDayWhenLimitsHasNoWeeklyEntries() {
@@ -291,11 +292,4 @@ final class WeeklyBreakdownTests: XCTestCase {
         XCTAssertEqual(items.first?.id, "weekly_all")
     }
 
-    func testNoLimitsStillProducesASingleAllModelsItem() {
-        let items = WeeklyBreakdown.items(from: response(limits: [], sevenDay: 46))
-
-        XCTAssertEqual(items.map(\.label), ["All models"])
-        XCTAssertEqual(items.first?.utilization, 46)
-        XCTAssertEqual(items.first?.id, "weekly_all")
-    }
 }

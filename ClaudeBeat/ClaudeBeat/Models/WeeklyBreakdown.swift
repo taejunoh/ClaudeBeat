@@ -13,9 +13,9 @@ enum WeeklyBreakdown {
 
     /// Builds the Weekly section's gauges from a usage response.
     ///
-    /// Prefers `limits`, which is where per-model utilization lives now. When it carries
-    /// no weekly entries — this endpoint has emptied fields without notice before — falls
-    /// back to the flat `seven_day` bucket, which is exactly what the popover showed
+    /// Prefers `limits`, which is where per-model utilization lives now. When the all-models
+    /// limit (`weekly_all`) is absent — whether or not scoped limits are present — synthesizes
+    /// it from the flat `seven_day` bucket, which is exactly what the popover showed
     /// before `limits` existed.
     static func items(from response: UsageResponse) -> [WeeklyItem] {
         var allModels: WeeklyItem?
