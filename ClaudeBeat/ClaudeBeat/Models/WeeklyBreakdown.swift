@@ -74,6 +74,24 @@ enum WeeklyBreakdown {
         )]
     }
 
+    /// The weekly limit that binds — the highest one. A per-model limit routinely sits far
+    /// above the all-models total (Fable at 86% against 48%), and it is the one that will
+    /// actually stop work, so it is what the menu bar shows and what alerts watch.
+    ///
+    /// Ties keep the earlier item, which puts "All models" ahead of any model. `max(by:)`
+    /// does not specify which of several equal elements it returns, so it is not used here.
+    static func bindingItem(in items: [WeeklyItem]) -> WeeklyItem? {
+        items.reduce(into: nil as WeeklyItem?) { binding, candidate in
+            guard let incumbent = binding else {
+                binding = candidate
+                return
+            }
+            if candidate.utilization > incumbent.utilization {
+                binding = candidate
+            }
+        }
+    }
+
     /// The one reset time to show for the whole section, or nil when the items disagree
     /// and each must show its own.
     ///

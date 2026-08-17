@@ -36,6 +36,9 @@ struct AlertSettingsView: View {
                             .frame(width: 35)
                     }
                     .disabled(!notificationManager.weeklyAlertsEnabled)
+                    Text("Applies to every weekly limit, including per-model ones.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
             }

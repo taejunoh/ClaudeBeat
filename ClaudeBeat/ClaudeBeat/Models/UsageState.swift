@@ -23,14 +23,31 @@ final class UsageState {
         return TimeFormatting.popoverString(until: resetsAt)
     }
 
+    // These read the binding limit rather than the flat seven_day bucket: a per-model
+    // limit routinely binds first, and showing the total alone reassures the user at
+    // exactly the wrong moment. With no `limits` in the response the list holds only the
+    // seven_day fallback item, so these produce today's values unchanged.
     var weeklyPercentage: String {
-        guard let utilization = response?.sevenDay.utilization else { return "--%"}
+        guard let utilization = weeklyBindingItem?.utilization else { return "--%"}
         return "\(Int(utilization))%"
     }
 
     var weeklyResetTime: String {
-        guard let resetsAt = response?.sevenDay.resetsAt else { return "--" }
+        guard let resetsAt = weeklyBindingItem?.resetsAt else { return "--" }
         return TimeFormatting.popoverString(until: resetsAt)
+    }
+
+    /// The model whose weekly limit binds, or nil when the all-models limit does. The menu
+    /// bar appends it so a higher-than-expected percentage is attributable.
+    var weeklyModelLabel: String? {
+        guard let item = weeklyBindingItem, item.label != WeeklyBreakdown.allModelsLabel else {
+            return nil
+        }
+        return item.label
+    }
+
+    private var weeklyBindingItem: WeeklyItem? {
+        WeeklyBreakdown.bindingItem(in: weeklyItems)
     }
 
     var weeklyItems: [WeeklyItem] {

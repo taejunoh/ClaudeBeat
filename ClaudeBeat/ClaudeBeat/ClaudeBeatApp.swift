@@ -160,6 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         case .weekly:
             var line = ["7d: \(usageState.weeklyPercentage)"]
+            if let model = usageState.weeklyModelLabel { line.append(model) }
             if showResetTime { line.append("· \(usageState.weeklyResetTime)") }
             button.attributedTitle = singleLineTitle(line.joined(separator: " "))
 
@@ -167,6 +168,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             var top = ["5h: \(usageState.menuBarPercentage)"]
             if showResetTime { top.append("· \(usageState.menuBarResetTime)") }
             var bottom = ["7d: \(usageState.weeklyPercentage)"]
+            if let model = usageState.weeklyModelLabel { bottom.append(model) }
             if showResetTime { bottom.append("· \(usageState.weeklyResetTime)") }
             button.attributedTitle = twoLineTitle(
                 top.joined(separator: " "),
