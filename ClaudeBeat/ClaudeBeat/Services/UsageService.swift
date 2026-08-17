@@ -54,35 +54,39 @@ final class UsageService {
     /// Writes the last raw response body to Library/Logs/last-response.log, overwriting each
     /// time so it stays bounded. The usage endpoint's shape drifts (fields appear, disappear,
     /// and go null without notice), so keeping the most recent payload on disk is what makes
-    /// the next drift diagnosable without guessing at key names.
-    private static func logRawResponse(endpoint: String, body: Data) {
+    /// the next drift diagnosable without guessing at key names. The write is fire-and-forget:
+    /// it is no longer guaranteed to complete before `fetchUsage()` returns, so a write
+    /// scheduled just before the user quits the app can be lost.
+    nonisolated private static func logRawResponse(endpoint: String, body: Data) {
         let bodyString = String(data: body, encoding: .utf8) ?? "<non-UTF8 body>"
-        write(
-            """
-            timestamp: \(Date())
-            endpoint: \(endpoint)
-            body: \(bodyString)
-            """,
-            to: "last-response.log"
-        )
+        let contents = """
+        timestamp: \(Date())
+        endpoint: \(endpoint)
+        body: \(bodyString)
+        """
+        // UsageService is @MainActor and this runs on every poll (60s by default), so the
+        // write is moved off the main actor. Both log files hold only the most recent
+        // entry and are written atomically, so a race between writers is last-writer-wins.
+        // The file semantic is unchanged, but the value semantic changed: with detached
+        // writes, the last writer is no longer necessarily the newest response. Each entry
+        // is timestamped, so a reader of the log can tell.
+        Task.detached(priority: .utility) { write(contents, to: "last-response.log") }
     }
 
     /// Writes a diagnostic dump of a decode failure to Library/Logs/decode-failures.log
     /// inside the app's sandbox container, overwriting each time so it stays bounded.
-    private static func logDecodeFailure(endpoint: String, error: Error, body: Data) {
+    nonisolated private static func logDecodeFailure(endpoint: String, error: Error, body: Data) {
         let bodyString = String(data: body, encoding: .utf8) ?? "<non-UTF8 body>"
-        write(
-            """
-            timestamp: \(Date())
-            endpoint: \(endpoint)
-            error: \(String(describing: error))
-            body: \(bodyString)
-            """,
-            to: "decode-failures.log"
-        )
+        let contents = """
+        timestamp: \(Date())
+        endpoint: \(endpoint)
+        error: \(String(describing: error))
+        body: \(bodyString)
+        """
+        Task.detached(priority: .utility) { write(contents, to: "decode-failures.log") }
     }
 
-    private static func write(_ contents: String, to fileName: String) {
+    nonisolated private static func write(_ contents: String, to fileName: String) {
         guard let logsDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?
             .appendingPathComponent("Logs", isDirectory: true) else { return }
         do {

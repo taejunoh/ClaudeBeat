@@ -87,6 +87,7 @@ final class WeeklyBreakdownTests: XCTestCase {
         XCTAssertEqual(items.map(\.label), ["All models"])
         XCTAssertEqual(items.first?.utilization, 46)
         XCTAssertEqual(items.first?.resetsAt, weeklyReset)
+        XCTAssertEqual(items.first?.id, "weekly_all")
     }
 
     func testFallsBackToSevenDayWhenLimitsHasNoWeeklyEntries() {
@@ -260,4 +261,35 @@ final class WeeklyBreakdownTests: XCTestCase {
     func testBindingItemIsNilForAnEmptyList() {
         XCTAssertNil(WeeklyBreakdown.bindingItem(in: []))
     }
+
+    func testAllModelsIsSynthesizedFromSevenDayWhenWeeklyAllIsMissing() {
+        // A response can carry scoped limits without the all-models one. The old rule only
+        // fell back when the whole list was empty, so this dropped the all-models gauge
+        // even though seven_day still had the number.
+        let items = WeeklyBreakdown.items(from: response(limits: [scoped("Fable", 100)], sevenDay: 66))
+
+        XCTAssertEqual(items.map(\.label), ["All models", "Fable"])
+        XCTAssertEqual(items.first?.utilization, 66)
+        XCTAssertEqual(items.first?.resetsAt, weeklyReset)
+    }
+
+    func testSynthesizedAllModelsUsesTheWeeklyAllId() {
+        let items = WeeklyBreakdown.items(from: response(limits: [scoped("Fable", 100)], sevenDay: 66))
+
+        // Same id whichever source produced the row, so a poll that flips between them
+        // does not read as a different view to SwiftUI.
+        XCTAssertEqual(items.first?.id, "weekly_all")
+    }
+
+    func testWeeklyAllWinsOverSevenDayWhenPresent() {
+        let items = WeeklyBreakdown.items(from: response(
+            limits: [UsageLimit(kind: "weekly_all", percent: 48, resetsAt: weeklyReset), scoped("Fable", 100)],
+            sevenDay: 66
+        ))
+
+        XCTAssertEqual(items.first?.label, "All models")
+        XCTAssertEqual(items.first?.utilization, 48)
+        XCTAssertEqual(items.first?.id, "weekly_all")
+    }
+
 }

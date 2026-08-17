@@ -223,4 +223,33 @@ final class NotificationManagerTests: XCTestCase {
             "All models at 91% of the 7-day limit"
         )
     }
+
+    func testSynthesizedAllModelsLimitCanAlert() throws {
+        let manager = NotificationManager()
+        manager.weeklyThreshold = 80
+        manager.weeklyAlertsEnabled = true
+
+        // No weekly_all in the response — the all-models figure comes from seven_day, and
+        // it must still be able to cross the threshold.
+        let response = UsageResponse(
+            fiveHour: UsageBucket(utilization: 4, resetsAt: nil),
+            sevenDay: UsageBucket(utilization: 91, resetsAt: nil),
+            extraUsage: nil,
+            limits: [
+                UsageLimit(
+                    kind: "weekly_scoped",
+                    percent: 20,
+                    scope: LimitScope(model: LimitModel(displayName: "Fable"))
+                )
+            ]
+        )
+
+        let sent = manager.weeklyAlertsToSend(for: WeeklyBreakdown.items(from: response))
+
+        XCTAssertEqual(sent.map(\.label), ["All models"])
+        XCTAssertEqual(
+            NotificationManager.weeklyAlertBody(for: try XCTUnwrap(sent.first)),
+            "All models at 91% of the 7-day limit"
+        )
+    }
 }
