@@ -33,7 +33,9 @@ final class NotificationManager {
     }
 
     private var sessionAlerted: Bool = false
-    private var weeklyAlerted: Bool = false
+    // Keyed by label, not by WeeklyItem.id: ids embed the item's sorted position, so one
+    // new model shifts the ids after it and would silently re-arm those latches.
+    private var weeklyAlerted: Set<String> = []
     private var extraUsageAlerted: Bool = false
     private var previousSessionUtil: Double?
 
@@ -59,20 +61,41 @@ final class NotificationManager {
         return utilization >= sessionThreshold
     }
 
-    func shouldAlertForWeekly(utilization: Double) -> Bool {
-        guard weeklyAlertsEnabled, !weeklyAlerted else { return false }
+    func shouldAlertForWeekly(utilization: Double, label: String) -> Bool {
+        guard weeklyAlertsEnabled, !weeklyAlerted.contains(label) else { return false }
         return utilization >= weeklyThreshold
     }
 
     func markSessionAlerted() { sessionAlerted = true }
-    func markWeeklyAlerted() { weeklyAlerted = true }
+    func markWeeklyAlerted(label: String) { weeklyAlerted.insert(label) }
 
     func resetSessionAlertIfNeeded(utilization: Double) {
         if utilization < sessionThreshold { sessionAlerted = false }
     }
 
-    func resetWeeklyAlertIfNeeded(utilization: Double) {
-        if utilization < weeklyThreshold { weeklyAlerted = false }
+    func resetWeeklyAlertIfNeeded(utilization: Double, label: String) {
+        if utilization < weeklyThreshold { weeklyAlerted.remove(label) }
+    }
+
+    /// The weekly limits to notify about on this poll, in list order, advancing the latch.
+    ///
+    /// Every weekly limit is watched, not just the all-models total: a per-model limit
+    /// routinely binds first — Fable at 86% against 48% for all models — and watching the
+    /// total alone stays silent straight through it.
+    func weeklyAlertsToSend(for items: [WeeklyItem]) -> [WeeklyItem] {
+        var toSend: [WeeklyItem] = []
+        for item in items {
+            resetWeeklyAlertIfNeeded(utilization: item.utilization, label: item.label)
+            if shouldAlertForWeekly(utilization: item.utilization, label: item.label) {
+                toSend.append(item)
+                markWeeklyAlerted(label: item.label)
+            }
+        }
+        return toSend
+    }
+
+    static func weeklyAlertBody(for item: WeeklyItem) -> String {
+        "\(item.label) at \(Int(item.utilization))% of the 7-day limit"
     }
 
     func checkAndNotify(response: UsageResponse) {
@@ -100,15 +123,12 @@ final class NotificationManager {
             markSessionAlerted()
         }
 
-        // Weekly threshold
-        let weeklyUtil = response.sevenDay.utilization
-        resetWeeklyAlertIfNeeded(utilization: weeklyUtil)
-        if shouldAlertForWeekly(utilization: weeklyUtil) {
+        // Weekly thresholds, one per reported limit
+        for item in weeklyAlertsToSend(for: WeeklyBreakdown.items(from: response)) {
             sendNotification(
                 title: "Claude Weekly Usage",
-                body: "7-day usage at \(Int(weeklyUtil))%"
+                body: Self.weeklyAlertBody(for: item)
             )
-            markWeeklyAlerted()
         }
 
         // Extra usage threshold
