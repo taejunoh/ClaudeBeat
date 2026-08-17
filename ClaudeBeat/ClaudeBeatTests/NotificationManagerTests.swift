@@ -95,12 +95,27 @@ final class NotificationManagerTests: XCTestCase {
     }
 
     func testEachWeeklyLimitLatchesIndependently() {
+        // Independence is across distinct labels; see testItemsSharingALabelCollapseIntoOneAlert for same-label behavior.
         let manager = NotificationManager()
         manager.weeklyThreshold = 80
         manager.weeklyAlertsEnabled = true
 
         let sent = manager.weeklyAlertsToSend(for: [item("All models", 91), item("Fable", 86)])
         XCTAssertEqual(sent.map(\.label), ["All models", "Fable"])
+    }
+
+    func testItemsSharingALabelCollapseIntoOneAlert() {
+        // When multiple limits share the same label and both are above the threshold, only one
+        // alert fires per poll. Same-label limits produce near-identical text (e.g., "Fable at 86%..."
+        // and "Fable at 90%..."), and users cannot act on them differently. Collapsing them prevents
+        // alert fatigue. The latch is keyed by label by design.
+        let manager = NotificationManager()
+        manager.weeklyThreshold = 80
+        manager.weeklyAlertsEnabled = true
+
+        let sent = manager.weeklyAlertsToSend(for: [item("Fable", 86), item("Fable", 90)])
+        XCTAssertEqual(sent.count, 1)
+        XCTAssertEqual(sent.map(\.label), ["Fable"])
     }
 
     func testANewModelDoesNotRefireExistingAlerts() {
