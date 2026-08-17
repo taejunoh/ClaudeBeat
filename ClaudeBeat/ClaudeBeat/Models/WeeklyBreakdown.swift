@@ -63,15 +63,18 @@ enum WeeklyBreakdown {
             )
         }
 
-        let items = [allModels].compactMap { $0 } + scoped
-        guard items.isEmpty else { return items }
-
-        return [WeeklyItem(
-            id: "seven_day",
+        // `weekly_all` can be missing while scoped limits are present. Synthesizing the
+        // row from `seven_day` whenever it is absent — rather than only when the whole
+        // list is empty — keeps the all-models gauge, the menu bar figure, and its alert
+        // alive in that case. `sevenDay` is non-optional, so this row always exists.
+        let allModelsItem = allModels ?? WeeklyItem(
+            id: "weekly_all",
             label: allModelsLabel,
             utilization: response.sevenDay.utilization,
             resetsAt: response.sevenDay.resetsAt
-        )]
+        )
+
+        return [allModelsItem] + scoped
     }
 
     /// The weekly limit that binds — the highest one. A per-model limit routinely sits far
