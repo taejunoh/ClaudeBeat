@@ -118,6 +118,37 @@ final class NotificationManagerTests: XCTestCase {
         XCTAssertEqual(sent.map(\.label), ["Aurora"])
     }
 
+    func testWeeklyAlertRefiresAfterDisappearingThenReturningStillHot() {
+        let manager = NotificationManager()
+        manager.weeklyThreshold = 80
+        manager.weeklyAlertsEnabled = true
+
+        _ = manager.weeklyAlertsToSend(for: [item("Fable", 86)])
+
+        // Fable drops out of the items entirely for a poll (model missing from the API
+        // response), then comes back still above the threshold. The stale latch must not
+        // suppress it.
+        _ = manager.weeklyAlertsToSend(for: [item("All models", 48)])
+
+        let again = manager.weeklyAlertsToSend(for: [item("All models", 48), item("Fable", 86)])
+        XCTAssertEqual(again.map(\.label), ["Fable"])
+    }
+
+    func testWeeklyAlertStaysQuietWhilePresentAndHotAcrossPolls() {
+        let manager = NotificationManager()
+        manager.weeklyThreshold = 80
+        manager.weeklyAlertsEnabled = true
+
+        let first = manager.weeklyAlertsToSend(for: [item("Fable", 86)])
+        XCTAssertEqual(first.map(\.label), ["Fable"])
+
+        let second = manager.weeklyAlertsToSend(for: [item("Fable", 87)])
+        XCTAssertTrue(second.isEmpty)
+
+        let third = manager.weeklyAlertsToSend(for: [item("Fable", 88)])
+        XCTAssertTrue(third.isEmpty)
+    }
+
     func testWeeklyAlertsRespectTheEnableToggle() {
         let manager = NotificationManager()
         manager.weeklyThreshold = 80

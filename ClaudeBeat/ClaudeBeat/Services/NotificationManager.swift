@@ -91,6 +91,16 @@ final class NotificationManager {
                 markWeeklyAlerted(label: item.label)
             }
         }
+
+        // A latched label that stops appearing in items (its model dropped out of the API
+        // response, or the server transiently omitted it) would otherwise never get pruned,
+        // since resetWeeklyAlertIfNeeded above only runs for labels still present. Left alone,
+        // that stale latch would silently swallow the next alert if the limit came back already
+        // over threshold. Drop it here instead: a label the API isn't reporting has no limit to
+        // be latched against, so re-arming it is correct.
+        let currentLabels = Set(items.map(\.label))
+        weeklyAlerted.formIntersection(currentLabels)
+
         return toSend
     }
 
