@@ -58,7 +58,7 @@ final class NotificationManagerTests: XCTestCase {
     }
 
     private func item(_ label: String, _ utilization: Double) -> WeeklyItem {
-        WeeklyItem(id: "id:\(label)", label: label, utilization: utilization, resetsAt: nil)
+        WeeklyItem(id: "id:\(label):\(utilization)", label: label, utilization: utilization, resetsAt: nil)
     }
 
     func testShouldAlertWeekly() {
@@ -116,6 +116,30 @@ final class NotificationManagerTests: XCTestCase {
         let sent = manager.weeklyAlertsToSend(for: [item("Fable", 86), item("Fable", 90)])
         XCTAssertEqual(sent.count, 1)
         XCTAssertEqual(sent.map(\.label), ["Fable"])
+        // The reported percentage must match the higher of the two — the one the menu bar
+        // shows via WeeklyBreakdown.bindingItem — not whichever happened to run first.
+        XCTAssertEqual(sent.first?.utilization, 90)
+    }
+
+    func testMixedHotAndColdSameLabelItemsDoNotThrashTheLatch() {
+        // Same-label items sorted ascending by percent (as WeeklyBreakdown.items(from:) does)
+        // put the below-threshold item first. Without collapsing by label before evaluating,
+        // that item's reset call wipes the latch the hot item just set, so every subsequent
+        // poll re-alerts forever instead of staying quiet.
+        let manager = NotificationManager()
+        manager.weeklyThreshold = 80
+        manager.weeklyAlertsEnabled = true
+
+        let items = [item("All models", 48), item("Fable", 10), item("Fable", 86)]
+
+        let first = manager.weeklyAlertsToSend(for: items)
+        XCTAssertEqual(first.map(\.label), ["Fable"])
+
+        let second = manager.weeklyAlertsToSend(for: items)
+        XCTAssertTrue(second.isEmpty)
+
+        let third = manager.weeklyAlertsToSend(for: items)
+        XCTAssertTrue(third.isEmpty)
     }
 
     func testANewModelDoesNotRefireExistingAlerts() {

@@ -73,8 +73,37 @@ final class NotificationManager {
         if utilization < sessionThreshold { sessionAlerted = false }
     }
 
-    func resetWeeklyAlertIfNeeded(utilization: Double, label: String) {
+    /// Only ever meaningful on an already-collapsed, one-entry-per-label list: called with a
+    /// raw item from a label that has a second, hotter item still pending in the same poll,
+    /// it would clear the latch that hotter item is about to set. Private so `weeklyAlertsToSend`
+    /// — the only caller, and the only place that collapses first — is the sole entry point.
+    private func resetWeeklyAlertIfNeeded(utilization: Double, label: String) {
         if utilization < weeklyThreshold { weeklyAlerted.remove(label) }
+    }
+
+    /// Collapses same-label items to one entry each, keeping the highest utilization per
+    /// label. `scope.surface` isn't decoded yet, so two surfaces of one model (Fable on
+    /// Claude Code, Fable on web) arrive sharing a label; evaluating them independently
+    /// would let a below-threshold entry clear the latch a hotter same-label entry just set,
+    /// re-alerting on every poll. Collapsing first makes the single-alert-per-label behavior
+    /// true by construction, and guarantees the reported percentage is the one the menu bar
+    /// shows via `WeeklyBreakdown.bindingItem`.
+    ///
+    /// Preserves the input's first-appearance order per label, so "All models" keeps leading.
+    private func collapsedByLabel(_ items: [WeeklyItem]) -> [WeeklyItem] {
+        var bestByLabel: [String: WeeklyItem] = [:]
+        var labelOrder: [String] = []
+        for item in items {
+            if let existing = bestByLabel[item.label] {
+                if item.utilization > existing.utilization {
+                    bestByLabel[item.label] = item
+                }
+            } else {
+                bestByLabel[item.label] = item
+                labelOrder.append(item.label)
+            }
+        }
+        return labelOrder.compactMap { bestByLabel[$0] }
     }
 
     /// The weekly limits to notify about on this poll, in list order, advancing the latch.
@@ -83,8 +112,10 @@ final class NotificationManager {
     /// routinely binds first — Fable at 86% against 48% for all models — and watching the
     /// total alone stays silent straight through it.
     func weeklyAlertsToSend(for items: [WeeklyItem]) -> [WeeklyItem] {
+        let collapsed = collapsedByLabel(items)
+
         var toSend: [WeeklyItem] = []
-        for item in items {
+        for item in collapsed {
             resetWeeklyAlertIfNeeded(utilization: item.utilization, label: item.label)
             if shouldAlertForWeekly(utilization: item.utilization, label: item.label) {
                 toSend.append(item)
@@ -98,7 +129,7 @@ final class NotificationManager {
         // that stale latch would silently swallow the next alert if the limit came back already
         // over threshold. Drop it here instead: a label the API isn't reporting has no limit to
         // be latched against, so re-arming it is correct.
-        let currentLabels = Set(items.map(\.label))
+        let currentLabels = Set(collapsed.map(\.label))
         weeklyAlerted.formIntersection(currentLabels)
 
         return toSend

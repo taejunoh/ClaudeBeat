@@ -246,8 +246,9 @@ final class WeeklyBreakdownTests: XCTestCase {
     }
 
     func testBindingItemKeepsTheEarlierItemOnATie() {
-        // "All models" is first in the list, so a tie must resolve to it rather than to
-        // whichever element a nondeterministic max happens to return.
+        // Pins the tie-break rule itself: on equal utilization, the earlier item in the list
+        // wins. "All models" is first in the list, so this is what keeps it — rather than
+        // some model it happens to tie with — as the binding item on a tie.
         let items = [
             WeeklyItem(id: "weekly_all", label: "All models", utilization: 80, resetsAt: nil),
             WeeklyItem(id: "weekly_scoped:0:Fable", label: "Fable", utilization: 80, resetsAt: nil)

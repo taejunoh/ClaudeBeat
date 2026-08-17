@@ -24,6 +24,13 @@ final class UsageStateTests: XCTestCase {
         XCTAssertEqual(state.menuBarResetTime, "--")
     }
 
+    func testWeeklyText_noData() {
+        let state = UsageState()
+        XCTAssertEqual(state.weeklyPercentage, "--%")
+        XCTAssertEqual(state.weeklyResetTime, "--")
+        XCTAssertNil(state.weeklyModelLabel)
+    }
+
     func testColorLevel_green() {
         let state = UsageState()
         state.update(with: UsageResponse(
