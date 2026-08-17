@@ -58,8 +58,12 @@ A new `UsageState.weeklyModelLabel: String?` returns nil when the binding item i
 "All models" and the model's label otherwise. `ClaudeBeatApp` interpolates it in the
 `.weekly` and `.both` display modes:
 
-- binding is a model → `7d: 86% Fable · Thu 6:00 AM`
-- binding is all-models → `7d: 48% · Thu 6:00 AM`, byte-identical to today
+- binding is a model → `7d: 86% Fable · Aug 20`
+- binding is all-models → `7d: 48% · Aug 20`, byte-identical to today
+
+(The menu bar renders its reset with `TimeFormatting.popoverString`, which shows a date
+beyond 24 hours out — not the `Thu 6:00 AM` clock format the popover's Weekly section
+uses.)
 
 Width only grows in the case where the extra word is the information the user needs.
 
