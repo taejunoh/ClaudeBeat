@@ -43,6 +43,7 @@
 - **Session reset notification** — Get notified when your 5h session resets so you can get back to work
 - **Threshold alerts** — macOS notifications when usage hits your configured threshold
   - Session (5h) and Weekly (7d): percentage slider (0–100%)
+  - The Weekly threshold applies to every weekly limit, including per-model ones, and each alerts on its own: `Fable at 100% of the 7-day limit`
   - Extra Usage: dollar amount input ($)
 - **In-app sign-in** — Log in to Claude in a built-in window; the session is stored in the macOS Keychain, never plaintext (session-key paste available as a Google sign-in fallback)
 - **Auto-refresh** — Polls every 60 seconds (configurable 15s-5min)
@@ -88,6 +89,8 @@ Your session key is stored in the macOS Keychain and persists across app restart
 | Weekly Limit | `7d: 7% · Apr 14` |
 | Both | `5h: 82% · 2h 54m` (top) / `7d: 7% · Apr 14` (bottom) |
 
+Weekly modes show the limit that binds — the highest one — and name the model when that limit is a model's rather than the all-models total: `7d: 100% Fable · Apr 14`.
+
 ## Settings
 
 Access settings via the gear icon in the popover. Uses a sidebar layout:
@@ -96,10 +99,16 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 |---|---|
 | **Auth** | Connection status, **Log in** / **Log out**, and an optional session-key field for the Google sign-in fallback |
 | **Display** | Menu bar mode (Session / Weekly / Both), toggle reset time visibility |
-| **Alerts** | Session reset notification, threshold alerts — Session (5h) & Weekly (7d) as % slider (0–100%), Extra Usage as $ amount |
+| **Alerts** | Session reset notification, threshold alerts — Session (5h) & Weekly (7d) as % slider (0–100%), Extra Usage as $ amount. The Weekly threshold covers every weekly limit, per-model ones included |
 | **General** | Polling interval (15s-5min), launch at login, version info |
 
 ## What's New
+
+### v1.1.0
+- **Per-model weekly limits are back** — claude.ai moved per-model usage into a new field and left the old one empty, so the Weekly breakdown had quietly lost its per-model gauge. It now shows All models plus a gauge for every model the API reports (e.g. Fable), with a shared reset time
+- **The menu bar shows the limit that binds** — Weekly mode read the all-models total, which can sit at 64% while a model is already at 100%. It now shows the highest weekly limit and names the model: `7d: 100% Fable · Apr 14`
+- **Alerts watch every weekly limit** — previously only the all-models total was watched, so a model could max out without a single notification. Each limit now alerts on its own and the notification says which: `Fable at 100% of the 7-day limit`
+- Every usage response is written to `~/Library/Containers/com.claudebeat.macos/Data/Library/Logs/last-response.log`, so the next time the API changes shape it can be diagnosed from the actual payload rather than guesswork
 
 ### v1.0.7
 - **Settings now shows the real version** — v1.0.5 and v1.0.6 both reported themselves as "1.0.0" because the release build discarded the version from the release tag
@@ -119,7 +128,7 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 ### v1.0.0
 - Real-time 5h session and 7d weekly usage display in menu bar
 - Popover dashboard with circular gauges
-- Weekly breakdown: All models + a gauge per model the API reports
+- Weekly breakdown: All models + Sonnet only
 - Extra usage tracking with dollar amounts
 - Session reset notifications
 - Configurable threshold alerts (session, weekly, extra usage)
