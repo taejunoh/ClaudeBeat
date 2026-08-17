@@ -194,6 +194,10 @@ final class WeeklyBreakdownTests: XCTestCase {
         XCTAssertEqual(items.map(\.label), ["All models", "Fable"])
         XCTAssertEqual(items.map(\.utilization), [46, 82])
         XCTAssertNotNil(WeeklyBreakdown.sharedResetDate(for: items))
+
+        let binding = WeeklyBreakdown.bindingItem(in: items)
+        XCTAssertEqual(binding?.label, "Fable")
+        XCTAssertEqual(binding?.utilization, 82)
     }
 
     /// Two `weekly_scoped` entries with the same label but different percents must maintain
@@ -229,5 +233,30 @@ final class WeeklyBreakdownTests: XCTestCase {
             XCTAssertEqual(item1.utilization, item2.utilization)
             XCTAssertEqual(item1.id, item2.id)
         }
+    }
+
+    func testBindingItemIsTheHighestUtilization() {
+        let items = [
+            WeeklyItem(id: "weekly_all", label: "All models", utilization: 48, resetsAt: nil),
+            WeeklyItem(id: "weekly_scoped:0:Fable", label: "Fable", utilization: 86, resetsAt: nil)
+        ]
+
+        XCTAssertEqual(WeeklyBreakdown.bindingItem(in: items)?.label, "Fable")
+        XCTAssertEqual(WeeklyBreakdown.bindingItem(in: items)?.utilization, 86)
+    }
+
+    func testBindingItemKeepsTheEarlierItemOnATie() {
+        // "All models" is first in the list, so a tie must resolve to it rather than to
+        // whichever element a nondeterministic max happens to return.
+        let items = [
+            WeeklyItem(id: "weekly_all", label: "All models", utilization: 80, resetsAt: nil),
+            WeeklyItem(id: "weekly_scoped:0:Fable", label: "Fable", utilization: 80, resetsAt: nil)
+        ]
+
+        XCTAssertEqual(WeeklyBreakdown.bindingItem(in: items)?.label, "All models")
+    }
+
+    func testBindingItemIsNilForAnEmptyList() {
+        XCTAssertNil(WeeklyBreakdown.bindingItem(in: []))
     }
 }
