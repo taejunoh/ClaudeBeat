@@ -104,6 +104,10 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 ## What's New
 
+### v1.1.1
+- **The all-models gauge no longer disappears when the API omits it** — a response can carry per-model limits without the all-models one, and the Weekly breakdown dropped that figure entirely rather than falling back to the 7-day total it still had. It now falls back per limit, so the popover, the menu bar, and the alert all keep the number
+- Diagnostic logging moved off the main thread; it previously wrote to disk synchronously on every poll
+
 ### v1.1.0
 - **Per-model weekly limits are back** — claude.ai moved per-model usage into a new field and left the old one empty, so the Weekly breakdown had quietly lost its per-model gauge. It now shows All models plus a gauge for every model the API reports (e.g. Fable), with a shared reset time
 - **The menu bar shows the limit that binds** — Weekly mode read the all-models total, which can sit at 64% while a model is already at 100%. It now shows the highest weekly limit and names the model: `7d: 100% Fable · Apr 14`
