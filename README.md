@@ -104,6 +104,9 @@ Access settings via the gear icon in the popover. Uses a sidebar layout:
 
 ## What's New
 
+### v1.1.2
+- **Two-line menu bar text is vertically centered** — in Both mode the 5h/7d block sat about 4pt above the menu bar's center, visibly higher than neighboring status items
+
 ### v1.1.1
 - **The all-models gauge no longer disappears when the API omits it** — a response can carry per-model limits without the all-models one, and the Weekly breakdown dropped that figure entirely rather than falling back to the 7-day total it still had. It now falls back per limit, so the popover, the menu bar, and the alert all keep the number
 - Diagnostic logging moved off the main thread; it previously wrote to disk synchronously on every poll
