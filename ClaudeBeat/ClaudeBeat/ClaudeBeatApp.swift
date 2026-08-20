@@ -196,6 +196,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .font: NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .medium),
             .foregroundColor: NSColor.labelColor,
             .paragraphStyle: paragraph,
+            // The status bar button anchors a multi-line title too high: measured on a
+            // 30pt menu bar, the block's ink sat 4.25pt above the bar's center. This
+            // offset re-centers it to within half a retina pixel, verified by capturing
+            // the live status item and profiling its ink rows against the bar height.
+            // An offscreen NSButton does NOT reproduce this — it centers the same string
+            // to within 0.5pt — so re-tune against the real menu bar if this drifts.
+            .baselineOffset: -3.75,
         ])
     }
 
