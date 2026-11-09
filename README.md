@@ -1,9 +1,12 @@
 # ClaudeBeat
 
+> [!IMPORTANT]
+> **Retired November 2026.** ClaudeBeat is no longer maintained. It was the starting point for [Needlbar](https://taejunoh.com/projects/needlbar.html), which expands the menu bar app to track usage, estimated cost, and quotas across Claude Code, Codex, and Cursor.
+
 <p align="center">A native macOS menu bar app that monitors your Claude AI token usage in real-time.</p>
 
 <p align="center">
-  <a href="https://claudebeat.com/">Website</a>
+  <a href="https://taejunoh.com/projects/claudebeat.html">Project write-up</a>
 </p>
 
 <p align="center">
